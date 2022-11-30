@@ -1,0 +1,218 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    /* colors */
+    --pink: #ffafcc;
+    --light-pink: #ffe2ed;
+    --light-accent: #ffd42b;
+    --dark-accent: #33261D;
+    --white: #fcfcfc;
+
+    /* box shadow settings */
+    --shadow-color: 339deg 48% 52%;
+    --shadow-elevation-medium:
+            0.3px 0.5px 0.7px hsl(var(--shadow-color) / 0.36),
+            0.8px 1.6px 2px -0.8px hsl(var(--shadow-color) / 0.36),
+            2.1px 4.1px 5.2px -1.7px hsl(var(--shadow-color) / 0.36),
+            5px 10px 12.6px -2.5px hsl(var(--shadow-color) / 0.36);
+    --shadow-elevation-low:
+            0.3px 0.5px 0.7px hsl(var(--shadow-color) / 0.34),
+            0.4px 0.8px 1px -1.2px hsl(var(--shadow-color) / 0.34),
+            1px 2px 2.5px -2.5px hsl(var(--shadow-color) / 0.34);
+
+    /* functional variables */
+    --columns: 4;
+    --animation-speed: 150ms;
+
+    margin: 0;
+    width: 100vw;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    background-color: var(--pink);
+}
+
+.content {
+    background-color: var(--white);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-elevation-medium);
+    min-width: 500px;
+    width: 75%;
+    margin-top: 5vh;
+    padding: 1em;
+    color: var(--dark-accent);
+}
+
+h1 {
+    text-align: center;
+    font-family: "Adobe Devanagari", serif;
+    margin: .5em 0 .5em 0;
+}
+
+.flash-cards {
+    display: grid;
+    /*flex-wrap: wrap;*/
+    /*justify-content: center;*/
+
+    grid-template-columns: repeat(var(--columns), 1fr);
+    gap: 1em;
+    font-family: "Adobe Devanagari", serif;
+    margin: 1em;
+    position: relative;
+}
+
+.card {
+    /*flex: 1 1 20ch;*/
+    background-color: var(--light-pink);
+    border-radius: 1rem;
+    text-align: center;
+    box-shadow: var(--shadow-elevation-low);
+
+    display: flex;
+    flex-direction: column;
+    aspect-ratio: 1;
+
+    transform-style: preserve-3d;
+    transition: transform var(--animation-speed) ease;
+
+    cursor: pointer;
+}
+
+.front {
+    flex-grow: 1;
+    background-color:inherit;
+    border-radius: inherit;
+
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    transform: translateZ(1px);
+}
+
+.back {
+    position: absolute;
+
+    width:100%;
+    height:100%;
+
+    transform: rotateY(180deg);;
+    background-color: var(--light-accent);
+    border-radius: inherit;
+
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.card.flipped {
+    transform: rotate3d(0, 1, 0, 180deg);
+}
+
+@keyframes wiggle {
+    0% { transform: translate(0px, 0px) rotate(0deg); }
+    20% { transform: translate(-1px, 1px) rotate(1deg); }
+    40% { transform: translate(1px, -1px) rotate(2deg); }
+    60% { transform: translate(-1px, 1px) rotate(1deg); }
+    80% { transform: translate(1px, -1px) rotate(-1deg); }
+    100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+.modifying {
+    cursor: grab;
+    user-select: none;
+}
+
+.moving {
+    z-index: 10;
+    transition: transform 0s !important;
+    cursor: grabbing;
+    will-change: transform;
+}
+
+.removed {
+    transform: scale(0%) !important;
+}
+
+/* form styles */
+.card.button {
+    font-size: 1.5em;
+    background-color: var(--pink);
+}
+
+.create form {
+    margin: 1em;
+}
+
+.create form input[type="text"] {
+    width: 100%;
+    line-height: 2em;
+    margin-bottom: 1em;
+}
+
+/* modify buttons */
+.buttons {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    transform: translateZ(2px);
+    transform-style: preserve-3d;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5em;
+
+    color: var(--pink);
+    opacity: 0;
+    transition: opacity .2s;
+}
+
+.flipped .buttons {
+    transform: translateZ(-1px);
+    color: var(--dark-accent);
+}
+
+.modifying .buttons {
+    opacity: 100%;
+}
+
+button {
+    color: inherit;
+    background-color: var(--white);
+    border: 1px solid transparent;
+    border-radius: .25em;
+    cursor: pointer;
+}
+
+button:active {
+    transform: translate3d(2px, 2px, 0);
+}
+
+.buttons button {
+    font-size: inherit;
+    aspect-ratio: 1;
+}
+
+.buttons button:hover {
+    background-color: var(--dark-accent);
+    color: var(--white);
+}
+
+i {
+    pointer-events: none;
+}
+
+@media screen and (max-width: 800px){
+    body {
+        --columns: 3;
+    }
+}
+
+@media screen and (min-width: 1200px){
+    body {
+        --columns: 5;
+    }
+}
