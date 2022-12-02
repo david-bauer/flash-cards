@@ -7,16 +7,18 @@ Good practice for html, css, and javascript
 
 - Flippable cards
 - Card creation
+- Card editing mode
 - Card deletion
 - Card reorganization (drag them to new positions)
-- Animations for the above three
+- Fancy animations for the above four
 - Pretty styling
 
 ## Future Functionality:
 
-- Card editing 
 - Multiple sets on one page
 - Import cards
+- Export cards
 - Saving sets to somewhere
 - Tooltips 
+- Better ARIA support
 - Performance increase on dragging

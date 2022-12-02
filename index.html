@@ -15,19 +15,17 @@
     <div class="content">
         <h1>Translate the French terms to English</h1>
         <div class="flash-cards">
-            <div class="card button modify">
-                <div class="front"><i class="fa-solid fa-pen"></i></div>
-                <div class="back"><i class="fa-solid fa-xmark"></i></div>
+            <div class="card card-settings create hidden" aria-disabled="true">
+                <form>
+                    <input class="front-input" type="text" placeholder="front side" required>
+                    <input class="back-input" type="text" placeholder="back side"  required>
+                    <button class="button" type="submit">Add Card</button>
+                </form>
             </div>
-            <div class="card button create">
-                <div class="front"><i class="fa-solid fa-plus"></i></div>
-                <div class="back">
-                    <form>
-                        <input class="front-input" type="text" placeholder="front side" required>
-                        <input class="back-input" type="text" placeholder="back side"  required>
-                        <button type="submit">Add Card</button>
-                    </form>
-                </div>
+            <div class="card card-settings modify">
+                <button class="card-flipper"></button>
+                <div class="card-face front"><i class="fa-solid fa-pen"></i></div>
+                <div class="card-face back"><i class="fa-solid fa-xmark"></i></div>
             </div>
         </div>
     </div>
