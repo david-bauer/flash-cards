@@ -45,6 +45,10 @@ h1 {
     margin: .5em 0 .5em 0;
 }
 
+p {
+    line-height: 2em;
+}
+
 button {
     font-family: inherit;
     font-size: inherit;
@@ -52,20 +56,6 @@ button {
     border: 2px solid transparent;
     border-radius: .25em;
     cursor: pointer;
-}
-
-.button {
-    background-color: var(--white);
-    box-shadow: var(--shadow-elevation-low);
-}
-
-.button:active {
-    transform: translate3d(2px, 2px, 0);
-}
-
-.button:hover {
-    background-color: var(--brown);
-    color: var(--white);
 }
 
 i {
@@ -100,6 +90,10 @@ i {
     background-color: var(--light-pink);
     box-shadow: var(--shadow-elevation-low);
     aspect-ratio: 1;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 
     transform-style: preserve-3d;
     transition: transform var(--animation-speed) ease;
@@ -185,12 +179,6 @@ i {
     aspect-ratio: 1;
 }
 
-.button[aria-pressed="true"] {
-    transform: translate3d(2px, 2px, 0);
-    background-color: var(--pink);
-    color: var(--white);
-}
-
 
 /* modify functionality */
 
@@ -224,6 +212,22 @@ i {
     transform: translateZ(-1px);
 }
 
+.editable p {
+    max-width: available;
+    padding-left: .5em;
+    padding-right: .5em;
+    margin: auto;
+    background-color: var(--white);
+    border-bottom: 5px solid var(--pink);
+    border-top: 5px solid transparent;
+    color: grey;
+}
+
+.editable p:focus {
+    border-bottom: 5px solid var(--brown);
+    outline: 2px solid var(--pink);
+}
+
 /*  ============================================
     styles for elements that modify the other cards within the card set
     ============================================ */
@@ -245,15 +249,66 @@ i {
     margin: .5rem;
 }
 
-.create form input[type="text"] {
+input[type="text"] {
     font-size: inherit;
-    width: 100%;
+    font-family: inherit;
     line-height: 2em;
-    margin-bottom: .5rem;
+
+    width: 100%;
+    margin-bottom: .5em;
+    padding-left: .5em;
+
+    background-color: var(--white);
+    border: none;
+    border-bottom: 5px solid var(--light-pink);
+    color: var(--brown);
+    box-shadow: var(--shadow-elevation-low);
 }
 
-.create form button {
-    margin-bottom: .5rem;
+input[type="text"]:focus {
+    border-bottom: 5px solid var(--brown);
+    outline: none;
+}
+
+.button {
+    background-color: var(--white);
+    box-shadow: var(--shadow-elevation-low);
+}
+
+.button:active {
+    transform: translate3d(2px, 2px, 0);
+}
+
+.button:hover {
+    background-color: var(--brown);
+    color: var(--white);
+}
+
+/* tool tips for buttons with labels */
+.button[aria-label]::after {
+    content: attr(aria-label);
+    font-size: .8rem;
+    position: absolute;
+    left: -3.5em;
+    top: -3em;
+    width: max-content;
+    padding: .5em;
+    background-color: var(--pink);
+    color: var(--white);
+    border-radius: .5rem;
+    opacity: 0;
+    transition: opacity, var(--animation-speed);
+    pointer-events: none;
+}
+
+.button[aria-label]:is(:focus, :hover)::after {
+    opacity: 1;
+}
+
+.button[aria-pressed="true"] {
+    transform: translate3d(1px, 1px, 0);
+    background-color: var(--pink);
+    color: var(--white);
 }
 
 

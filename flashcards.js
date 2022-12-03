@@ -51,6 +51,30 @@ function getClosestSlot(x, y) {
     // returns the index of the slot closest to the point (x, y) relative to the cardset container
     return Math.round(x / GAP) + COLUMNS * Math.round(y / GAP);
 }
+function readCards(setElem) {
+    let cards = [];
+    setElem.querySelectorAll('.card:not(.card-settings)').forEach(card => {
+        [front, back] = card.querySelectorAll('.card-face');
+        cards.push([front.innerText.trim(), back.innerText.trim()]);
+    });
+    return cards;
+}
+function exportCards(setElem, faceSeparator, cardSeparator) {
+    return readCards(setElem).reduce((total, cardText, index, set) => {
+        if (index < set.length - 1) {
+            return total + card[0] + faceSeparator + card[1] + cardSeparator;
+        } else { // don't print a cardSeparator after the last card
+            return total + card[0] + faceSeparator + card[1];
+        }
+    }, '');
+}
+function importCards(cardString, faceSeparator, cardSeparator) {
+    const cards = cardString.split(cardSeparator);
+    return cards.map(card => {
+        const faces = card.split(faceSeparator);
+        return {front: faces[0], back: faces[1]};
+    })
+}
 
 function slideCard(card, distX, distY) {
     // Plays and returns an animation where the card moves to its original position from (distX, distY)
@@ -92,13 +116,17 @@ function renderFace(side, content, properties) {
     face.classList.add('card-face');
     face.classList.add(side);
 
+    const text = document.createElement('p');
+    text.innerText = content;
+
     Object.entries(properties).forEach(([propertyName, propertyValue]) => {
         if (propertyName === 'class' || propertyName === 'value') {
             console.error(`Invalid card property: setting ${propertyName} this way can cause unintended consequences`);
         }
-        face.setAttribute(propertyName, propertyValue.toString());
+        text.setAttribute(propertyName, propertyValue.toString());
     });
-    face.innerText = content;
+    face.append(text);
+
     return face;
 }
 function renderCard(frontSide, backSide, index) {
@@ -360,7 +388,7 @@ function editCardEvent(evt) {
         // edit button pressed
         card.classList.toggle('editable');
         evt.target.setAttribute('aria-pressed', (evt.target.getAttribute('aria-pressed') === 'false').toString());
-        card.querySelectorAll('.card-face').forEach(face => {
+        card.querySelectorAll('.card-face p').forEach(face => {
             face.contentEditable = (!face.isContentEditable).toString();
         });
     }
@@ -375,6 +403,14 @@ function toggleModifyCard(card) {
         card.removeEventListener('mousedown', startDragEvent);
         card.addEventListener('click', flipCardEvent);
         tools.removeEventListener('click', editCardEvent);
+        // undo the edit state if the edit button was pressed
+        if (card.classList.contains('editable')) {
+            card.classList.remove('editable');
+            card.querySelectorAll('p[contenteditable="true"]').forEach(elem => {
+                elem.removeAttribute('contenteditable');
+            });
+            tools.firstElementChild.setAttribute('aria-pressed', 'false');
+        }
     } else {
         card.classList.add('modifying');
         card.addEventListener('mousedown', startDragEvent);
