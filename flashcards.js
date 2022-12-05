@@ -54,25 +54,28 @@ function getClosestSlot(x, y) {
 function readCards(setElem) {
     let cards = [];
     setElem.querySelectorAll('.card:not(.card-settings)').forEach(card => {
-        [front, back] = card.querySelectorAll('.card-face');
-        cards.push([front.innerText.trim(), back.innerText.trim()]);
+        const cardElem = card.querySelectorAll('.card-face');
+        cards.push([cardElem[0].innerText.trim(), cardElem[1].innerText.trim()]);
     });
     return cards;
 }
 function exportCards(setElem, faceSeparator, cardSeparator) {
     return readCards(setElem).reduce((total, cardText, index, set) => {
         if (index < set.length - 1) {
-            return total + card[0] + faceSeparator + card[1] + cardSeparator;
+            return total + cardText[0] + faceSeparator + cardText[1] + cardSeparator;
         } else { // don't print a cardSeparator after the last card
-            return total + card[0] + faceSeparator + card[1];
+            return total + cardText[0] + faceSeparator + cardText[1];
         }
     }, '');
 }
 function importCards(cardString, faceSeparator, cardSeparator) {
     const cards = cardString.split(cardSeparator);
-    return cards.map(card => {
+    return cards.map((card, index) => {
         const faces = card.split(faceSeparator);
-        return {front: faces[0], back: faces[1]};
+        if (faces.length !== 2){
+            console.error(`${this.name} failed: Incorrectly formatted data: each card must have two faces. Card ${index} has ${faces.length}: ${faces}`);
+        }
+        return faces;
     })
 }
 
@@ -149,8 +152,8 @@ function renderCard(frontSide, backSide, index) {
     button.classList.add('card-flipper');
 
     card.innerHTML = '<div class="modify-tools" aria-expanded="false">\
-                        <button class="button button-edit" disabled title="edit" aria-pressed="false" aria-label="edit this card"><i class="fa-solid fa-paragraph"></i></button>\
-                        <button class="button button-delete" disabled title="delete" aria-pressed="false" aria-label="delete this card"><i class="fa-solid fa-trash-can"></i></button>\
+                        <button class="button button-edit" disabled aria-pressed="false" aria-label="edit this card"><i class="fa-solid fa-paragraph"></i></button>\
+                        <button class="button button-delete" disabled aria-pressed="false" aria-label="delete this card"><i class="fa-solid fa-trash-can"></i></button>\
                      </div>'
 
     card.prepend(button);
@@ -480,6 +483,6 @@ window.addEventListener('resize', function() {
     clearTimeout(timer);
     timer = setTimeout(function() {
         COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
-        GAP = document.querySelector('.card').offsetWidth + 16;
+        GAP = document.querySelector('.card:last-child').offsetWidth + 16;
     }, delay);
 })

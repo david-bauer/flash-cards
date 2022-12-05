@@ -57,7 +57,7 @@ button {
     border-radius: .25em;
     cursor: pointer;
 }
-
+/* prevent icons from stealing click events from their parent element */
 i {
     pointer-events: none;
 }
@@ -97,7 +97,6 @@ i {
 
     transform-style: preserve-3d;
     transition: transform var(--animation-speed) ease;
-    --accent: var(--pink);
 }
 
 .card.flipped {
@@ -139,6 +138,22 @@ i {
     background-color: var(--gold);
 }
 
+.card-face p {
+    max-width: available;
+    padding-left: .5em;
+    padding-right: .5em;
+    margin: auto;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    transition: background-color var(--animation-speed),
+                border-bottom-color var(--animation-speed);
+}
+/* prevent user-entered line breaks */
+.card-face p > br {
+    display: none;
+}
+
+
 /* card-flipper styles */
 .card-flipper {
     width: 100%;
@@ -146,19 +161,14 @@ i {
     border-radius: inherit;
     transform: translateZ(2px);
     background-color: transparent;
-    opacity: .25;
+    /*opacity: .25;*/
 }
 .flipped .card-flipper {
     transform: translateZ(-1px);
 }
 
-.card-flipper:focus {
-    /*outline: none;*/
-}
-
 
 /* card specific modify controls  */
-
 .modify-tools {
     position: absolute;
     right: .5rem;
@@ -185,6 +195,7 @@ i {
 .modifying:not(.editable) {
     cursor: move;
 }
+/* hide the flip button when in modification mode */
 .modifying .card-flipper {
     transform: translateZ(-1px);
 }
@@ -196,41 +207,29 @@ i {
 .modifying > .card-face {
     height: 50%;
 }
-
+/* fix the horizontal border between the front and back elements */
 .modifying .front {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
-
 .modifying .back {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     transform: revert;
 }
-
-.editable .card-flipper {
-    transform: translateZ(-1px);
-}
-
+/* make the content of the flashcards look like an input form when editing mode is on */
 .editable p {
-    max-width: available;
-    padding-left: .5em;
-    padding-right: .5em;
-    margin: auto;
     background-color: var(--white);
     border-bottom: 5px solid var(--pink);
-    border-top: 5px solid transparent;
     color: grey;
 }
-
 .editable p:focus {
     border-bottom: 5px solid var(--brown);
     outline: 2px solid var(--pink);
 }
 
-/*  ============================================
-    styles for elements that modify the other cards within the card set
-    ============================================ */
+
+/* styles for elements that modify the other cards within the card set */
 .card-settings {
     background-color: var(--pink);
 }
@@ -238,6 +237,7 @@ i {
 .hidden {
     display: none;
 }
+
 
 /* form styles */
 .modify {
@@ -263,27 +263,26 @@ input[type="text"] {
     border-bottom: 5px solid var(--light-pink);
     color: var(--brown);
     box-shadow: var(--shadow-elevation-low);
+    transition: border-bottom-color var(--animation-speed);
 }
-
 input[type="text"]:focus {
     border-bottom: 5px solid var(--brown);
     outline: none;
 }
 
+
+/* button styles */
 .button {
     background-color: var(--white);
     box-shadow: var(--shadow-elevation-low);
+    transition: transform var(--animation-speed),
+                background-color var(--animation-speed),
+                color var(--animation-speed);
 }
-
-.button:active {
-    transform: translate3d(2px, 2px, 0);
-}
-
 .button:hover {
     background-color: var(--brown);
     color: var(--white);
 }
-
 /* tool tips for buttons with labels */
 .button[aria-label]::after {
     content: attr(aria-label);
@@ -297,14 +296,13 @@ input[type="text"]:focus {
     color: var(--white);
     border-radius: .5rem;
     opacity: 0;
-    transition: opacity, var(--animation-speed);
+    transition: opacity var(--animation-speed) 300ms;
     pointer-events: none;
 }
-
-.button[aria-label]:is(:focus, :hover)::after {
+.button[aria-label]:hover::after {
     opacity: 1;
 }
-
+/* indent button when pushed */
 .button[aria-pressed="true"] {
     transform: translate3d(1px, 1px, 0);
     background-color: var(--pink);

@@ -11,6 +11,7 @@ Good practice for html, css, and javascript
 - Card deletion
 - Card reorganization (drag them to new positions)
 - Fancy animations for the above four
+- Tooltips
 - Pretty styling
 
 ## Future Functionality:
@@ -19,6 +20,3 @@ Good practice for html, css, and javascript
 - Import cards
 - Export cards
 - Saving sets to somewhere
-- Tooltips 
-- Better ARIA support
-- Performance increase on dragging
