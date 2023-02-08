@@ -187,6 +187,7 @@ i {
 
 .modify-tools .button {
     aspect-ratio: 1;
+    /*border-radius: .5rem;*/
 }
 
 
@@ -240,10 +241,6 @@ i {
 
 
 /* form styles */
-.modify {
-    font-size: 1.5em;
-}
-
 .create form {
     font-size: 1rem;
     margin: .5rem;
@@ -288,11 +285,11 @@ input[type="text"]:focus {
     content: attr(aria-label);
     font-size: .8rem;
     position: absolute;
-    left: -3.5em;
-    top: -3em;
+    right: calc(100% + .5rem);
+    top: 0;
     width: max-content;
-    padding: .5em;
-    background-color: var(--pink);
+    padding: .5rem;
+    background-color: var(--brown);
     color: var(--white);
     border-radius: .5rem;
     opacity: 0;

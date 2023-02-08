@@ -1,6 +1,7 @@
 let COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
 let GAP = document.querySelector('.card:last-child').offsetWidth + 16;
-const ANIMATION_TIMING = 150;
+const ANIMATION_TIMING =  parseInt(getComputedStyle(document.body).getPropertyValue('--animation-speed').slice(0, -2));
+
 
 /* helper functions */
 
@@ -110,9 +111,6 @@ function growCard(card) {
 function flipCard(card) {
     card.classList.toggle('flipped');
 }
-function flipCardEvent(evt) {
-    flipCard(evt.currentTarget);
-}
 
 function renderFace(side, content, properties) {
     const face = document.createElement('div');
@@ -138,8 +136,8 @@ function renderCard(frontSide, backSide, index) {
     <div class="card" data-index="0">
         <button class="card-flipper">/<button>
         <div class="buttons">
-            <button class="button button-edit"><i class="fa-solid fa-paragraph"></i></button>
-            <button class="button button-delete"><i class="fa-solid fa-trash-can"></i></button>
+            <button class="button button-edit"><i class="las la-edit"></i></button>
+            <button class="button button-delete">i class="las la-trash-alt"></i></button>
         </div>
         <div class="front" lang="fr">french side</div>
         <div class="back" lang="en">english side</div>
@@ -152,8 +150,8 @@ function renderCard(frontSide, backSide, index) {
     button.classList.add('card-flipper');
 
     card.innerHTML = '<div class="modify-tools" aria-expanded="false">\
-                        <button class="button button-edit" disabled aria-pressed="false" aria-label="edit this card"><i class="fa-solid fa-paragraph"></i></button>\
-                        <button class="button button-delete" disabled aria-pressed="false" aria-label="delete this card"><i class="fa-solid fa-trash-can"></i></button>\
+                        <button class="button button-edit" disabled aria-pressed="false" aria-label="edit this card"><i class="las la-pen-alt la-lg"></i></button>\
+                        <button class="button button-delete" disabled aria-pressed="false" aria-label="delete this card"><i class="las la-trash-alt la-lg"></i></button>\
                      </div>'
 
     card.prepend(button);
@@ -166,38 +164,7 @@ function renderCard(frontSide, backSide, index) {
 
     return card;
 }
-
-class CardSet extends DocumentFragment{
-    constructor(cards, properties) {
-        super();
-        let defaultProp = {
-            title: 'new flashcard set',
-            columns: COLUMNS,
-            gap: GAP,
-            numCards: 0
-        }
-        this.prop = properties;
-    }
-
-    createCard(card) {
-        const newCard = renderCard(card[0], card[1], this.prop.numCards);
-        newCard.addEventListener('click', flipCardEvent);
-        this.prop.numCards += 1;
-        return newCard;
-    }
-
-    appendCards(...cards) {
-        // creates cards from multiple arrays of text and adds them to the end of the document fragment
-        this.append(...cards.map(this.createCard));
-    }
-
-    prependCards(...cards) {
-        // creates cards from multiple arrays of text and adds them to the beginning of the document fragment
-        this.prepend(...cards.map(this.createCard));
-    }
-}
-
-function createCardList(...cards) {  //TODO: refactor this into CardSet
+function createCardList(...cards) {
     // returns a DocumentFragment containing cards created from the parameters
     const list = new DocumentFragment();
     cards.forEach(([front, back], index) => {
@@ -208,120 +175,108 @@ function createCardList(...cards) {  //TODO: refactor this into CardSet
     return list;
 }
 
-/*
-TODO: rewrite with drag events: https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API
-For the card being dragged:
-    'dragstart' - fires when the user starts to drag an element
-    'drag' - fires every 350ms when the user is dragging an element
-    'dragend' fires when the user has finished dragging the element
-For the movable cards: 'ondragover' 'ondragleave'
-    'dragover' - fires when the dragged element is over the drop target
- */
 
-// Allows the clicked card to be dragged
-function startDragEvent (evt) {
-    const card = evt.currentTarget;
-    if (card.classList.contains('editable') || evt.target.classList.contains('button')) {
+/* Event Handling */
+function flipCardEvent(clickEvent) {
+    flipCard(clickEvent.currentTarget);
+}
+
+// cards can be dragged and repositioned during editing mode
+function startDragEvent (mouseDownEvent) {
+    // prepares a card to be dragged
+    const card =  mouseDownEvent.currentTarget;
+    if (card.classList.contains('editable') ||  mouseDownEvent.target.classList.contains('button')) {
         return;
     }
     const set = card.parentElement;
     const cards = set.querySelectorAll('.card:not(.card-settings)');
     const setRect = set.getBoundingClientRect();
     const cardRect = card.getBoundingClientRect();
-    // an array that tracks the DOMElement in each position.
-    // initialized to [0, 1, 2, ...]
+    // track the DOMElement in each position throughout the lifetime of the drag. initialized to [0, 1, 2, ...]
     let elemIndexes = Array.from({length: cards.length}, (pos, index) => index);
     // calculate the maximum translation allowed (relative to this card)
     const boundary = new DOMRect(setRect.x - cardRect.x, setRect.y - cardRect.y,
                             setRect.right - cardRect.right, setRect.bottom - cardRect.bottom);
-    // save the 'mousemove' event callback function so that we can remove the event listener later
-    const tracker = dragCard.bind(null, evt.screenX, evt.screenY, card, cards, set, elemIndexes, boundary);
-    // 'moving' class adds style and prevents other actions from occurring (flipping the card)
     card.classList.toggle('moving');
 
-    let timer = new Date();
-    document.addEventListener('mousemove', tracker);
-    document.addEventListener('mouseup', finishDrag.bind(null, evt.screenX, evt.screenY, card, cards, set, timer, tracker), {once: true});
-}
+    // move the card when the mouse moves
+    function dragCard(mouseMoveEvent) {
+        /* Defines the behavior of the card being dragged:
+            - The card follows the mouse as long as the mouse is within bounds
+            - When the dragged card overlaps another card, the overlapped card is moved to the open slot left by the dragged card
+        */
+        // pin the held card to the mouse
+        const pinX = squish(mouseMoveEvent.screenX - mouseDownEvent.screenX, boundary.left, boundary.width);
+        const pinY = squish(mouseMoveEvent.screenY - mouseDownEvent.screenY, boundary.top, boundary.height);
+        card.style.transform = `translate3d(${pinX}px, ${pinY}px, 0)`;
 
-/* Defines the behavior of the card being dragged:
-    - The card follows the mouse as long as the mouse is within bounds
-    - When the dragged card overlaps another card, the overlapped card is moved to the open slot left by the dragged card
-*/
-function dragCard(mouseStartX, mouseStartY, card, cards, set, elemIndexes, boundary, evt) {
-    // evt.stopPropagation();
-    // the held card should be pinned to the mouse
-    const pinX = squish(evt.screenX - mouseStartX, boundary.left, boundary.width);
-    const pinY = squish(evt.screenY - mouseStartY, boundary.top, boundary.height);
+        // find the nearest slot so that we can evict the current tenant
+        const prevSlot = readInt(card, 'data-last', 'data-index'); // the last slot the grabbed card occupied
+        const nextSlot = getClosestSlot(card.offsetLeft + pinX, card.offsetTop + pinY); // the slot closest to the card's current position
 
-    card.style.transform = `translate3d(${pinX}px, ${pinY}px, 0)`;
+        // don't evict self or neighbors that do not exist
+        if (prevSlot === nextSlot || 0 > nextSlot || nextSlot >= cards.length) { return; }
 
-    // find the nearest slot so that we can evict the current tenant
-    const prevSlot = readInt(card, 'data-last', 'data-index'); // the last slot the grabbed card occupied
-    const nextSlot = getClosestSlot(card.offsetLeft + pinX, card.offsetTop + pinY); // the slot closest to the card's current position
-
-    // don't evict self or neighbors that do not exist
-    if (prevSlot === nextSlot
-        || 0 > nextSlot || nextSlot >= cards.length) {
-        return;
+        const neighbor = cards[elemIndexes[nextSlot]];
+        // record the new indexes of cards so that we can still find the DOM element later
+        elemIndexes[nextSlot] = readInt(card, 'data-index');
+        elemIndexes[prevSlot] = readInt(neighbor, 'data-index');
+        // swap data-last
+        card.setAttribute('data-last', nextSlot.toString());
+        neighbor.setAttribute('data-last', prevSlot.toString());
+        // move the neighboring card to the open space left by the grabbed card
+        const openSlot = getSlotRect(prevSlot);
+        neighbor.style.transform = `translate3d(${openSlot.x - neighbor.offsetLeft}px, ${openSlot.y - neighbor.offsetTop}px, 0)`;
     }
-    const neighbor = cards[elemIndexes[nextSlot]];
-    // record the new indexes of cards so that we can still find the DOM element later
-    elemIndexes[nextSlot] = readInt(card, 'data-index');
-    elemIndexes[prevSlot] = readInt(neighbor, 'data-index');
-    // swap data-last
-    card.setAttribute('data-last', nextSlot.toString());
-    neighbor.setAttribute('data-last', prevSlot.toString());
-    // move the neighboring card to the open space left by the grabbed card
-    const openSlot = getSlotRect(prevSlot);
-    neighbor.style.transform = `translate3d(${openSlot.x - neighbor.offsetLeft}px, ${openSlot.y - neighbor.offsetTop}px, 0)`;
-}
+    document.addEventListener('mousemove', dragCard);
 
-// Cleans up after startDragEvent and updates the DOM with the new positions of the cards
-function finishDrag(mouseX, mouseY, card, cards, set, startTime, tracker, evt) {
-    // disregard short clicks
-    let finishTime = new Date();
-    const tooLong = 300; // any drags that take more ms than this are considered long
-    const range = 10; // any drags that cover more distance than this are considered long
-    if ((finishTime - startTime < tooLong)
-        && (Math.pow(mouseX - evt.screenX, 2) + Math.pow(mouseY - evt.screenY, 2) < Math.pow(range, 2))) {
+    const startTime = new Date(); // used to track how long the user held the mouse down
+    // stop the card and update the DOM when the user releases the mouse
+    function finishDrag(mouseUpEvent) {
+        // Clean up after startDragEvent and update the DOM with the new positions of the cards when the mouse button is released
+        let finishTime = new Date();
+        const minTime = 300; // any drags that take more ms than this are considered long
+        const minDist = 10; // any drags that cover more distance than this are considered long
+        // disregard short clicks
+        if ((finishTime - startTime < minTime) && (Math.pow(mouseUpEvent.screenX - mouseDownEvent.screenX, 2) + Math.pow(mouseUpEvent.screenY - mouseDownEvent.screenY, 2) < Math.pow(minDist, 2))) {
+            // reset the DOM when the click is too short
+            cards.forEach((card) => {
+                card.removeAttribute('style');
+            });
+        } else {
+            // when the click is long enough reorganize the DOM according to the new order
+            // find the new order of the elements
+            let correctOrder = Array.from(cards).sort((a, b) => {
+                if (readInt(a, 'data-last') > readInt(b, 'data-last')) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            });
 
-        // reset the DOM
-        card.classList.toggle('moving');
-        cards.forEach((card) => {
-            card.removeAttribute('style');
-        });
-    } else {
-        // find the new order of the elements
-        let correctOrder = Array.from(cards).sort((a, b) => {
-            if (readInt(a, 'data-last') > readInt(b, 'data-last')) {
-                return 1;
-            } else {
-                return -1;
-            }
-        });
+            // remove temp styling and update DOM index data
+            correctOrder.forEach((card, index) => {
+                card.setAttribute('data-index', index);
+                card.removeAttribute('style');
+                card.removeAttribute('data-last');
+            })
 
-        // remove temp styling and update DOM index data
-        correctOrder.forEach((card, index) => {
-            card.setAttribute('data-index', index);
-            card.removeAttribute('style');
+            // update the DOM
+            set.prepend(...correctOrder);
             card.removeAttribute('data-last');
-        })
+        }
 
-        // update the DOM
-        set.prepend(...correctOrder);
-        card.removeAttribute('data-last');
+        // release the dragged card
         card.classList.toggle('moving');
+        document.removeEventListener('mousemove', dragCard);
     }
-
-    evt.currentTarget.removeEventListener('mousemove', tracker);
+    document.addEventListener('mouseup', finishDrag, {once: true, passive: true});
 }
 
-
-// The new card form creates a new card on submit
-function createCardEvent(evt) {
-    evt.preventDefault();
-    const form = evt.currentTarget;
+// Handles submit events for the create card form
+function createCardEvent(submitEvent) {
+    submitEvent.preventDefault();
+    const form = submitEvent.currentTarget;
     const frontInputElem = form.querySelector('.front-input');
     const frontInput = frontInputElem.value.trim();
     const backInput = form.querySelector('.back-input').value.trim();
@@ -341,9 +296,8 @@ function createCardEvent(evt) {
         }
         tools.addEventListener('click', editCardEvent);
 
-        // insert the new card
+        // insert the new card and animate it growing
         set.insertBefore(newCard, form.parentElement);
-        // animate
         growCard(newCard);
 
         // the cards after the new one get pushed to the right--animate it with FLIP
@@ -363,11 +317,11 @@ document.querySelectorAll('.create form').forEach(form => {
     form.addEventListener('submit', createCardEvent);
 });
 
-/* When the modify button is pressed, allow all the cards to be repositioned, edited, or deleted */
-function editCardEvent(evt) {
-    const card = evt.currentTarget.parentElement;
+// Handles click events for the modification buttons (edit, delete) on each card
+function editCardEvent(clickEvent) {
+    const card = clickEvent.currentTarget.parentElement;
     // delete button pressed
-    if (evt.target.classList.contains('button-delete')) {
+    if (clickEvent.target.classList.contains('button-delete')) {
         // shrink the card to be deleted
         const cardIndex = readInt(card, 'data-index');
         shrinkCard(card).finished.then( function() {
@@ -387,16 +341,21 @@ function editCardEvent(evt) {
             card.setAttribute('data-index', (index - 1).toString());
         });
 
-    } else if (evt.target.classList.contains('button-edit')) {
+    } else if (clickEvent.target.classList.contains('button-edit')) {
         // edit button pressed
         card.classList.toggle('editable');
-        evt.target.setAttribute('aria-pressed', (evt.target.getAttribute('aria-pressed') === 'false').toString());
+        clickEvent.target.setAttribute('aria-pressed', (clickEvent.target.getAttribute('aria-pressed') === 'false').toString());
         card.querySelectorAll('.card-face p').forEach(face => {
             face.contentEditable = (!face.isContentEditable).toString();
         });
     }
 }
+
 function toggleModifyCard(card) {
+    /* transform a card into modification mode by
+     - showing both faces at once
+     - displaying the edit and delete buttons
+     - allowing the card to be dragged */
     card.classList.remove('flipped');  // un-flip the cards
     card.firstElementChild.toggleAttribute('disabled');  // disable the card flip button
     const tools = card.querySelector('.modify-tools');
@@ -427,9 +386,11 @@ function toggleModifyCard(card) {
         tool.toggleAttribute('disabled');
     }
 }
-function modifyCardsEvent(evt) {
+
+// When the modify button is pressed, allow all the cards to be repositioned, edited, or deleted
+function modifyCardsEvent(clickEvent) {
     // flip the button
-    const button = evt.currentTarget;
+    const button = clickEvent.currentTarget;
     const newCardForm = button.previousElementSibling;
     const set = button.parentElement;
     const numCards = set.childElementCount;
@@ -461,7 +422,6 @@ document.querySelectorAll('.modify').forEach( button => {
 });
 
 
-
 // Add click listeners for existing cards in the DOM
 document.querySelectorAll('.card:not(.card-settings)').forEach(card => {
     card.addEventListener('click', flipCardEvent);
@@ -485,4 +445,4 @@ window.addEventListener('resize', function() {
         COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
         GAP = document.querySelector('.card:last-child').offsetWidth + 16;
     }, delay);
-})
+});
