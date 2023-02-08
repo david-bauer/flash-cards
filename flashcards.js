@@ -1,12 +1,13 @@
 let COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
 let GAP = document.querySelector('.card:last-child').offsetWidth + 16;
 const ANIMATION_TIMING =  parseInt(getComputedStyle(document.body).getPropertyValue('--animation-speed').slice(0, -2));
+const COOKIE = 'cards'
 
 
 /* helper functions */
 
 function readInt(elem, ...attributes) {
-    // returns an attribute value as an integer.
+    // returns the first non-null attribute value as an integer.
     // if the first attribute does not exist, return the value of the second, and so on...
     const firstValidAttribute = attributes.find(attempt => {
         return (elem.getAttribute(attempt) !== null);
@@ -53,14 +54,16 @@ function getClosestSlot(x, y) {
     return Math.round(x / GAP) + COLUMNS * Math.round(y / GAP);
 }
 function readCards(setElem) {
+    // returns a list of the card face pairs in setElem
     let cards = [];
-    setElem.querySelectorAll('.card:not(.card-settings)').forEach(card => {
-        const cardElem = card.querySelectorAll('.card-face');
-        cards.push([cardElem[0].innerText.trim(), cardElem[1].innerText.trim()]);
+    setElem.querySelectorAll('.card:not(.card-settings)').forEach(cardElem => {
+        const faceElems = cardElem.querySelectorAll('.card-face');
+        cards.push([faceElems[0].innerText.trim(), faceElems[1].innerText.trim()]);
     });
     return cards;
 }
 function exportCards(setElem, faceSeparator, cardSeparator) {
+    // returns a string representation of the cards in setElem
     return readCards(setElem).reduce((total, cardText, index, set) => {
         if (index < set.length - 1) {
             return total + cardText[0] + faceSeparator + cardText[1] + cardSeparator;
@@ -70,6 +73,7 @@ function exportCards(setElem, faceSeparator, cardSeparator) {
     }, '');
 }
 function importCards(cardString, faceSeparator, cardSeparator) {
+    // returns a list of card face pairs from a string
     const cards = cardString.split(cardSeparator);
     return cards.map((card, index) => {
         const faces = card.split(faceSeparator);
@@ -78,6 +82,11 @@ function importCards(cardString, faceSeparator, cardSeparator) {
         }
         return faces;
     })
+}
+function save(setElem) {
+    const cards = readCards(setElem);
+    console.table(cards);
+    localStorage.setItem(COOKIE, JSON.stringify(readCards(setElem)));
 }
 
 function slideCard(card, distX, distY) {
@@ -247,12 +256,9 @@ function startDragEvent (mouseDownEvent) {
             // when the click is long enough reorganize the DOM according to the new order
             // find the new order of the elements
             let correctOrder = Array.from(cards).sort((a, b) => {
-                if (readInt(a, 'data-last') > readInt(b, 'data-last')) {
-                    return 1;
-                } else {
-                    return -1;
-                }
+                return readInt(a, 'data-last', 'data-index') - readInt(b, 'data-last', 'data-index');
             });
+            console.log(correctOrder);
 
             // remove temp styling and update DOM index data
             correctOrder.forEach((card, index) => {
@@ -406,6 +412,7 @@ function modifyCardsEvent(clickEvent) {
         const newPos = getSlotRect(numCards - 2);
         const oldPos = getSlotRect(numCards - 1);
         slideCard(button, oldPos.x - newPos.x, oldPos.y - newPos.y);
+        save(set);
     } else {
         // show the form
         growCard(newCardForm);
@@ -429,9 +436,14 @@ document.querySelectorAll('.card:not(.card-settings)').forEach(card => {
 
 // Create the initial cards
 const grid = document.querySelector('.flash-cards');
-const data = [['de rien', "it's ok"],
-              ['je vous en prie', "don't mention it"],
-              ["je t'en prie", "you're welcome"]];
+const data = JSON.parse(localStorage.getItem(COOKIE)) ??
+    [["de rien", "it's ok"],
+    ["je vous en prie", "don't mention it"],
+    ["je t'en prie", "you're welcome"],
+    ["excusez-moi", "excuse me"],
+    ["il n'y a pas de quoi", "there's nothing to get worked up about"],
+    ["ca s'ecrit comment?", "how is that written?"],
+    ["faire", "to do"]];
 grid.prepend(createCardList(...data));
 
 // Update global constants COLUMNS and GAP when the window resizes
