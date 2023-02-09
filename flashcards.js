@@ -42,6 +42,18 @@ function clamp(num, min, max) {
     // returns the value closest to num while remaining within the boundary defined by min and max
     return Math.min(Math.max(num, min), max);
 }
+function debounce(callback, delay) {
+    /* returns a function that will only trigger once if it is called multiple times within delay seconds
+    * used to increase performance on trigger-happy events */
+    let timer = null;
+
+    return (event) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            callback(event);
+        }, delay);
+    }
+}
 
 function getSlotRect(index) {
     // returns a DOMRect representing a slot's location relative to the cardset container
@@ -53,10 +65,14 @@ function getClosestSlot(x, y) {
     // returns the index of the slot closest to the point (x, y) relative to the cardset container
     return Math.round(x / GAP) + COLUMNS * Math.round(y / GAP);
 }
+function findCards(set) {
+    // returns an HTMLCollection of all the cards in a card set
+    return set.querySelectorAll('.card:not(.card-settings)')
+}
 function readCards(setElem) {
     // returns a list of the card face pairs in setElem
     let cards = [];
-    setElem.querySelectorAll('.card:not(.card-settings)').forEach(cardElem => {
+    findCards(setElem).forEach(cardElem => {
         const faceElems = cardElem.querySelectorAll('.card-face');
         cards.push([faceElems[0].innerText.trim(), faceElems[1].innerText.trim()]);
     });
@@ -78,17 +94,35 @@ function importCards(cardString, faceSeparator, cardSeparator) {
     return cards.map((card, index) => {
         const faces = card.split(faceSeparator);
         if (faces.length !== 2){
-            console.error(`${this.name} failed: Incorrectly formatted data: each card must have two faces. Card ${index} has ${faces.length}: ${faces}`);
+            throw SyntaxError(`Card import failed due to incorrectly formatted data: each card must have exactly two faces. \n Card ${index} has ${faces.length}: '${faces.join(',')}'`);
         }
         return faces;
-    })
+    });
 }
-function save(setElem) {
-    const cards = readCards(setElem);
-    console.table(cards);
-    localStorage.setItem(COOKIE, JSON.stringify(readCards(setElem)));
+function save(set) {
+    // saves the current DOM to localStorage
+    const setInfo = {
+        title: set.dataset.title,
+        cards: readCards(set)
+    }
+    // console.table(setInfo.cards);
+    localStorage.setItem(COOKIE, JSON.stringify(setInfo));
 }
 
+function copyButton(button) {
+    // copies the text of the previous element to the clipboard and animates the button
+    navigator.clipboard.writeText(button.previousElementSibling.innerText.trim()).then(() => {
+        // change the label of the button to indicate that something has happened
+        const oldLabel = button.getAttribute('aria-label');
+        button.setAttribute('aria-label', 'copied!');
+        button.setAttribute('aria-pressed', 'true');
+        // reset the button label a second later
+        setTimeout(() => {
+            button.setAttribute('aria-label', oldLabel);
+            button.setAttribute('aria-pressed', 'false');
+        }, 2000);
+    });
+}
 function slideCard(card, distX, distY) {
     // Plays and returns an animation where the card moves to its original position from (distX, distY)
     const flipped = card.classList.contains('flipped') ? ' rotateY(180deg)' : '';
@@ -184,6 +218,129 @@ function createCardList(...cards) {
     return list;
 }
 
+/* popup functionality */
+function openSettingsPopup(set) {
+    // extract key properties from the DOM (title, language, etc.)
+    const popup = set.querySelector('.popup');
+    const trigger = set.querySelector('.set-config-trigger');
+    const defaultDelimiters = {face:', ', card: '\\n',}
+    const source = exportCards(set, defaultDelimiters.face, defaultDelimiters.card.replace('\\n', '\n'));
+
+    // update the forms with the extracted properties
+    const configForm = popup.querySelector('.set-config-form');
+    configForm.elements.title.value = set.dataset.title;
+    configForm.elements.langFront.value = set.dataset.langFront;
+    configForm.elements.langBack.value = set.dataset.langBack;
+    const configUpdateEvent = debounce(settingsUpdateEvent, 200);
+    configForm.addEventListener('input', configUpdateEvent);
+
+    const exportForm = popup.querySelector('.export-import-form');
+    exportForm.elements.face.value = defaultDelimiters.face;
+    exportForm.elements.card.value = defaultDelimiters.card;
+    set.querySelector('.source-input').innerText = source;
+    const exportUpdateEvent = exportUpdateEventHandlerFactory(exportForm);
+    exportForm.addEventListener('input', exportUpdateEvent);
+
+    // make the popup-close-btn remove event listeners and hide the popup
+    const closeButton = popup.querySelector('.popup-close-btn');
+    const closeSettingsPopupEvent = (clickEvent) => {
+        configForm.removeEventListener('input', configUpdateEvent);
+        exportForm.removeEventListener('input', exportUpdateEvent);
+        const fadeOut = [{opacity: 1},
+            {opacity: 0}];
+        popup.animate(fadeOut, ANIMATION_TIMING).finished.then(() => {
+            popup.classList.add('hidden');
+        });
+        trigger.removeAttribute('disabled');
+        save(set);
+    }
+    closeButton.addEventListener('click', closeSettingsPopupEvent, {once: true});
+    // TODO: make clicking anywhere but the popup close the popup
+
+    // display the popup
+    trigger.setAttribute('disabled', 'true');
+    popup.style.top = `calc(${trigger.offsetTop}px - 1rem)`;
+    popup.style.right = '-1rem';
+    popup.classList.remove('hidden');
+    const fadeIn = [{opacity: 0},
+                    {opacity: 1}];
+    popup.animate(fadeIn, ANIMATION_TIMING);
+}
+
+function settingsUpdateEvent(InputEvent) {
+    const inputs = InputEvent.target.form.elements;
+    const set = InputEvent.target.form.parentElement.parentElement;
+    const newTitle = inputs.title.value.trim();
+    const newLangFront = inputs.langFront.value.trim();
+    const newLangBack = inputs.langBack.value.trim();
+
+    if (newTitle !== set.dataset.title) {
+        set.dataset.title = newTitle;
+        set.querySelector('.set-title').innerText = newTitle;
+    }
+    if (newLangFront !== set.dataset.langFront) {
+        set.dataset.langFront = newLangFront;
+        set.querySelectorAll('.front > p').forEach((elem) => {
+            elem.setAttribute('lang', newLangFront);
+        });
+    }
+    if (newLangBack !== set.dataset.langBack) {
+        set.dataset.langBack = newLangBack;
+        set.querySelectorAll('.back > p').forEach((elem) => {
+            elem.setAttribute('lang', newLangBack);
+        });
+    }
+}
+
+function exportUpdateEventHandlerFactory(ExportImportForm) {
+    const set = ExportImportForm.parentElement.parentElement;
+    const delimInputs = ExportImportForm.elements;
+    const sourceInput = set.querySelector('.source-input');
+    let oldProps = {
+        card: undefined,
+        face: undefined,
+        source: undefined,
+    };
+    let timer = null;
+
+    return (InputEvent) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            const newProps = {
+                card: delimInputs.card.value.replace('\\n', '\n'),
+                face: delimInputs.face.value.replace('\\n', '\n'),
+                source: sourceInput.innerText.trim()
+            };
+            if (oldProps.card !== newProps.card || oldProps.face !== newProps.face) {
+                // delimiter values changed, rerender source
+                const source = set.querySelector('.source-input');
+                source.innerText = exportCards(set, newProps.face, newProps.card);
+                source.classList.remove('.error');
+                // update oldProps
+                oldProps = newProps;
+            } else if (oldProps.source !== newProps.source) {
+                // source changed, import it
+                try {
+                    const newCards = importCards(newProps.source, newProps.face, newProps.card);
+                    findCards(set).forEach(card => {
+                        card.remove();
+                    });
+                    set.querySelector('.flash-cards').prepend(createCardList(...newCards));
+                    /* the cards' state gets messed up when the source is edited while modification mode is on
+                    TODO: generate the cards so that they are aligned with the modification mode
+                     */
+                    sourceInput.classList.remove('error');
+                } catch (SyntaxError) {
+                    // import failed because of bad syntax
+                    console.error(SyntaxError);
+                    sourceInput.classList.add('error');
+                }
+                // update oldProps
+                oldProps = newProps;
+            }
+        }, 500);
+    }
+}
 
 /* Event Handling */
 function flipCardEvent(clickEvent) {
@@ -198,7 +355,7 @@ function startDragEvent (mouseDownEvent) {
         return;
     }
     const set = card.parentElement;
-    const cards = set.querySelectorAll('.card:not(.card-settings)');
+    const cards = findCards(set);
     const setRect = set.getBoundingClientRect();
     const cardRect = card.getBoundingClientRect();
     // track the DOMElement in each position throughout the lifetime of the drag. initialized to [0, 1, 2, ...]
@@ -258,7 +415,6 @@ function startDragEvent (mouseDownEvent) {
             let correctOrder = Array.from(cards).sort((a, b) => {
                 return readInt(a, 'data-last', 'data-index') - readInt(b, 'data-last', 'data-index');
             });
-            console.log(correctOrder);
 
             // remove temp styling and update DOM index data
             correctOrder.forEach((card, index) => {
@@ -283,14 +439,14 @@ function startDragEvent (mouseDownEvent) {
 function createCardEvent(submitEvent) {
     submitEvent.preventDefault();
     const form = submitEvent.currentTarget;
-    const frontInputElem = form.querySelector('.front-input');
-    const frontInput = frontInputElem.value.trim();
-    const backInput = form.querySelector('.back-input').value.trim();
+    const front = form.elements.front.value.trim();
+    const back = form.elements.back.value.trim();
     const set = form.parentElement.parentElement;
 
     // only add a new card when the form is valid and the set is in modify mode
-    if (frontInput && backInput && set.querySelector('.modify.flipped')) {
-        const newCard = renderCard(frontInput, backInput, set.querySelectorAll('.card:not(.card-settings)').length.toString());
+    if (front && back && set.querySelector('.modify.flipped')) {
+        const nextCardIndex = findCards(set).length
+        const newCard = renderCard(front, back, nextCardIndex);
         // update the new Card's values so that it behaves under modify mode (renderCard assumes modify mode is off)
         newCard.classList.add('modifying');
         newCard.firstElementChild.toggleAttribute('disabled');  // disable the card flip button
@@ -307,15 +463,14 @@ function createCardEvent(submitEvent) {
         growCard(newCard);
 
         // the cards after the new one get pushed to the right--animate it with FLIP
-        const numberOfCards = set.querySelectorAll('.card:not(.card-settings)').length;
         const buttons = set.querySelectorAll('.card-settings');
         buttons.forEach((button, index) => {
-            const dest = getSlotRect(index + numberOfCards - 1);
-            const src = getSlotRect(index + numberOfCards);
+            const dest = getSlotRect(index + nextCardIndex);
+            const src = getSlotRect(index + nextCardIndex + 1);
             slideCard(button, dest.x - src.x, dest.y - src.y);
         });
 
-        frontInputElem.focus();
+        form.elements.front.focus();
         form.reset();
     }
 }
@@ -422,39 +577,31 @@ function modifyCardsEvent(clickEvent) {
     }
 
     // toggle the modification state of all the cards in the set
-    button.parentElement.querySelectorAll('.card:not(.card-settings)').forEach(toggleModifyCard);
+    findCards(set).forEach(toggleModifyCard);
 }
 document.querySelectorAll('.modify').forEach( button => {
     button.addEventListener('click', modifyCardsEvent);
 });
 
-
-// Add click listeners for existing cards in the DOM
-document.querySelectorAll('.card:not(.card-settings)').forEach(card => {
-    card.addEventListener('click', flipCardEvent);
-});
-
 // Create the initial cards
 const grid = document.querySelector('.flash-cards');
-const data = JSON.parse(localStorage.getItem(COOKIE)) ??
-    [["de rien", "it's ok"],
+const data = JSON.parse(localStorage.getItem(COOKIE));
+const defaultCards = [
+    ["de rien", "it's ok"],
     ["je vous en prie", "don't mention it"],
     ["je t'en prie", "you're welcome"],
     ["excusez-moi", "excuse me"],
     ["il n'y a pas de quoi", "there's nothing to get worked up about"],
     ["ca s'ecrit comment?", "how is that written?"],
     ["faire", "to do"]];
-grid.prepend(createCardList(...data));
+grid.prepend(createCardList(...(data.cards ?? defaultCards)));
+const title = data.title ?? 'translate the french terms to english'
+document.querySelector('.flash-card-set').dataset.title = title;
+document.querySelector('.set-title').innerText = title;
 
 // Update global constants COLUMNS and GAP when the window resizes
-let timer = null;
-window.addEventListener('resize', function() {
-    const delay = 500 // when the window resizes multiple times in 500 ms, nothing happens
-
-    // reset timer
-    clearTimeout(timer);
-    timer = setTimeout(function() {
+window.addEventListener('resize', debounce(
+    (resizeEvent) => {
         COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
         GAP = document.querySelector('.card:last-child').offsetWidth + 16;
-    }, delay);
-});
+    }, 500));

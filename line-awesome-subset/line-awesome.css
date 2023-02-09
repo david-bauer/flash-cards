@@ -18,6 +18,9 @@
 .la-2x {
   font-size: 2em; }
 
+.la-3x {
+  font-size: 3em; }
+
 .la-tools:before {
   content: "\f7d9"; }
 
@@ -30,10 +33,14 @@
 .la-trash-alt:before {
   content: "\f2ed"; }
 
+.la-cog:before {
+  content: "\f013"; }
+
+
 @font-face {
   font-family: 'Line Awesome';
   font-style: normal;
   font-weight: 900;
   font-display: auto;
-  src: url("fonts/la-solid-900.subset.woff2") format("woff2"), url("fonts/la-solid-900.subset.woff") format("woff");
+  src: url("fonts/la-solid-900.woff2") format("woff2"), url("fonts/la-solid-900.woff") format("woff");
 }

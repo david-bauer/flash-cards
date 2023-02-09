@@ -29,6 +29,7 @@ body {
     --animation-speed: 150ms;
 
     margin: 0;
+    padding-top: 5vh;
     width: 100vw;
 
     display: flex;
@@ -38,11 +39,13 @@ body {
     background-color: var(--pink);
 }
 
-h1 {
+h1, h2, h3 {
     text-transform: lowercase;
-    text-align: center;
-    font-family: "Adobe Devanagari", serif;
-    margin: .5em 0 .5em 0;
+    margin: 0;
+}
+
+h2 {
+    font-size: 1.8em;
 }
 
 p {
@@ -50,7 +53,6 @@ p {
 }
 
 button {
-    font-family: inherit;
     font-size: inherit;
     color: inherit;
     border: 2px solid transparent;
@@ -62,24 +64,50 @@ i {
     pointer-events: none;
 }
 
+.page-title {
+    color: var(--white);
+    font-family: "supersize-bk", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: max(1.5em, min(4vh, 3vw));
+    min-width: 500px;
+    width: 75%;
+    /*margin-bottom: -.8em;*/
+}
+
+.space-between {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cols-2 {
+    display: flex;
+    gap: 1em;
+    align-items: center;
+}
+
 .content {
     background-color: var(--white);
     border-radius: 1rem;
     box-shadow: var(--shadow-elevation-medium);
     min-width: 500px;
     width: 75%;
-    margin-top: 5vh;
-    padding: 1em;
+    padding: 2em;
     color: var(--brown);
+}
+
+.flash-card-set {
+    position: relative;
 }
 
 .flash-cards {
     display: grid;
     grid-template-columns: repeat(var(--columns), 1fr);
     gap: 1em;
-    font-family: Bahnschrift, serif;
-    margin: 1em;
     position: relative;
+    margin-top: .5em;
 }
 
 
@@ -166,6 +194,9 @@ i {
 .flipped .card-flipper {
     transform: translateZ(-1px);
 }
+.card-flipper:focus {
+    outline: 2px solid var(--brown);
+}
 
 
 /* card specific modify controls  */
@@ -174,7 +205,6 @@ i {
     right: .5rem;
     top: -1ch;
     transform: translateZ(2px);
-    transform-style: preserve-3d;
 
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -236,12 +266,12 @@ i {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 
 /* form styles */
-.create form {
+.new-card-form {
     font-size: 1rem;
     margin: .5rem;
 }
@@ -252,6 +282,7 @@ input[type="text"] {
     line-height: 2em;
 
     width: 100%;
+    margin-top: .25em;
     margin-bottom: .5em;
     padding-left: .5em;
 
@@ -271,13 +302,14 @@ input[type="text"]:focus {
 /* button styles */
 .button {
     background-color: var(--white);
-    box-shadow: var(--shadow-elevation-low);
+    /*box-shadow: var(--shadow-elevation-low);*/
     transition: transform var(--animation-speed),
                 background-color var(--animation-speed),
                 color var(--animation-speed);
 }
-.button:hover {
+.button:is(:hover,:focus) {
     background-color: var(--brown);
+    outline: none;
     color: var(--white);
 }
 /* tool tips for buttons with labels */
@@ -306,6 +338,65 @@ input[type="text"]:focus {
     color: var(--white);
 }
 
+.popup {
+    position: absolute;
+    min-width: min-content;
+    width: clamp(310px, 40%, 500px);
+    background-color: var(--pink);
+    padding: 1rem;
+    border-radius: .5rem;
+
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    z-index: 2;
+    transition: opacity var(--animation-speed);
+    box-shadow: var(--shadow-elevation-medium);
+}
+
+.relative {
+    position: relative;
+}
+
+code {
+    display: block;
+    width: 100%;
+    min-height: 10em;
+    max-height: 30vh;
+    background-color: var(--white);
+    padding: .5em;
+    border: 3px dashed var(--light-pink);
+    color: var(--brown);
+    overflow: auto;
+}
+
+code:focus {
+    border: 3px dashed var(--brown);
+    outline: none;
+}
+
+.copy-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: .25em .5em .25em .5em;
+}
+
+.center-text {
+    text-align: center;
+}
+
+.square {
+    aspect-ratio: 1;
+}
+
+.short-input {
+    width: 3rem;
+}
+
+.error {
+    color: crimson;
+}
 
 /* content reflow */
 @media screen and (max-width: 860px){
