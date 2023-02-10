@@ -1,5 +1,4 @@
 let COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
-let GAP = document.querySelector('.card:last-child').offsetWidth + 16;
 const ANIMATION_TIMING =  parseInt(getComputedStyle(document.body).getPropertyValue('--animation-speed').slice(0, -2));
 const COOKIE = 'cards'
 
@@ -54,6 +53,15 @@ function debounce(callback, delay) {
         }, delay);
     }
 }
+function fallback(data, fallbackData) {
+    // fills missing properties of data with properties of fallBackData
+    Object.keys(fallbackData).forEach(key => {
+        if (!(key in data)) {
+            data[key] = fallbackData[key];
+        }
+    });
+    return data;
+}
 
 function getSlotRect(index) {
     // returns a DOMRect representing a slot's location relative to the cardset container
@@ -65,14 +73,25 @@ function getClosestSlot(x, y) {
     // returns the index of the slot closest to the point (x, y) relative to the cardset container
     return Math.round(x / GAP) + COLUMNS * Math.round(y / GAP);
 }
-function findCards(set) {
+function getProps(set) {
+    const props = [{}, {}];
+    Object.entries(set.dataset).forEach(([key, value]) => {
+        if (key.includes('Front')) {
+            props[0][key.slice(0, -5)] = value;
+        } else if (key.includes('Back')) {
+            props[1][key.slice(0, -4)] = value;
+        }
+    });
+    return props;
+}
+function getCards(set) {
     // returns an HTMLCollection of all the cards in a card set
     return set.querySelectorAll('.card:not(.card-settings)')
 }
 function readCards(setElem) {
     // returns a list of the card face pairs in setElem
     let cards = [];
-    findCards(setElem).forEach(cardElem => {
+    getCards(setElem).forEach(cardElem => {
         const faceElems = cardElem.querySelectorAll('.card-face');
         cards.push([faceElems[0].innerText.trim(), faceElems[1].innerText.trim()]);
     });
@@ -99,14 +118,19 @@ function importCards(cardString, faceSeparator, cardSeparator) {
         return faces;
     });
 }
-function save(set) {
-    // saves the current DOM to localStorage
-    const setInfo = {
+function readSet(set) {
+    return {
         title: set.dataset.title,
+        props: getProps(set),
         cards: readCards(set)
-    }
-    // console.table(setInfo.cards);
-    localStorage.setItem(COOKIE, JSON.stringify(setInfo));
+    };
+}
+function saveAll() {
+    const setList = [];
+    document.querySelectorAll('.flash-card-set').forEach(set => {
+        setList.push(readSet(set));
+    })
+    localStorage.setItem(COOKIE, JSON.stringify(setList));
 }
 
 function copyButton(button) {
@@ -132,11 +156,13 @@ function slideCard(card, distX, distY) {
 }
 function shrinkCard(card) {
     // Plays and returns an animation where the card shrinks completely after being removed from the normal flow
+    // remove the card from the normal flow (so that the rest of the cards can move left)
     card.style.left = toPx(card.offsetLeft);
     card.style.top = toPx(card.offsetTop);
     card.style.width = toPx(card.offsetWidth);
     card.style.height = toPx(card.offsetHeight);
     card.style.position = 'absolute';
+    // shrink it
     const animation = card.animate([{transform: 'scale(1)'}, {transform: 'scale(0)'}], ANIMATION_TIMING);
     animation.finished.then(value => {
         card.removeAttribute('style');
@@ -154,8 +180,28 @@ function growCard(card) {
 function flipCard(card) {
     card.classList.toggle('flipped');
 }
+function setTitle(set, newTitle) {
+    set.dataset.title = newTitle;
+    set.querySelector('.set-title').innerText = newTitle;
+}
+function setProps(set, props) {
+    function helper(propsSide, side) {
+        const cards = set.querySelectorAll(`.${side.toLowerCase()} > p`);
+        Object.entries(propsSide).forEach(([key, value]) => {
+            set.dataset[key + side] = value;
 
-function renderFace(side, content, properties) {
+            if (cards) {
+                cards.forEach(card => {
+                    card.setAttribute(key, value);
+                });
+            }
+        });
+    }
+    helper(props[0], 'Front');
+    helper(props[1], 'Back');
+}
+
+function renderFace(side, content, props) {
     const face = document.createElement('div');
     face.classList.add('card-face');
     face.classList.add(side);
@@ -163,8 +209,8 @@ function renderFace(side, content, properties) {
     const text = document.createElement('p');
     text.innerText = content;
 
-    Object.entries(properties).forEach(([propertyName, propertyValue]) => {
-        if (propertyName === 'class' || propertyName === 'value') {
+    Object.entries(props).forEach(([propertyName, propertyValue]) => {
+        if (propertyName === 'class' || propertyName === 'value' || propertyName === 'script') {
             console.error(`Invalid card property: setting ${propertyName} this way can cause unintended consequences`);
         }
         text.setAttribute(propertyName, propertyValue.toString());
@@ -173,7 +219,7 @@ function renderFace(side, content, properties) {
 
     return face;
 }
-function renderCard(frontSide, backSide, index) {
+function renderCard(front, back, props, index) {
     /*
     Returns an HTMLElement that looks like this:
     <div class="card" data-index="0">
@@ -193,13 +239,13 @@ function renderCard(frontSide, backSide, index) {
     button.classList.add('card-flipper');
 
     card.innerHTML = '<div class="modify-tools" aria-expanded="false">\
-                        <button class="button button-edit" disabled aria-pressed="false" aria-label="edit this card"><i class="las la-pen-alt la-lg"></i></button>\
-                        <button class="button button-delete" disabled aria-pressed="false" aria-label="delete this card"><i class="las la-trash-alt la-lg"></i></button>\
+                        <button class="button edit-btn" disabled aria-pressed="false" aria-label="edit this card"><i class="las la-pen-alt la-lg"></i></button>\
+                        <button class="button delete-btn" disabled aria-pressed="false" aria-label="delete this card"><i class="las la-trash-alt la-lg"></i></button>\
                      </div>'
 
     card.prepend(button);
-    card.append(renderFace('front', frontSide, {lang: 'fr'}),
-                renderFace('back', backSide, {lang: 'en'}));
+    card.append(renderFace('front', front, props[0]),
+                renderFace('back', back, props[1]));
 
     if (index !== undefined) {
         card.setAttribute('data-index', index);
@@ -207,15 +253,104 @@ function renderCard(frontSide, backSide, index) {
 
     return card;
 }
-function createCardList(...cards) {
+function renderCardList(cards, props) {
     // returns a DocumentFragment containing cards created from the parameters
     const list = new DocumentFragment();
     cards.forEach(([front, back], index) => {
-        const newCard = renderCard(front, back, index)
+        const newCard = renderCard(front, back, props, index);
         list.appendChild(newCard);
         newCard.addEventListener('click', flipCardEvent);
     });
     return list;
+}
+function renderCardSet(data) {
+    fallback(data, {
+        title: 'title missing',
+        props: [{lang: 'missing'}, {lang: 'missing'}],
+        cards: [["cards missing", ":("]]
+    });
+
+    const set = document.createElement('div');
+    set.classList.add('flash-card-set');
+    set.dataset.title = data.title;
+    setProps(set, data.props);
+    set.innerHTML = `
+        <div class="space-between relative">
+            <h2 class="set-title">${data.title}</h2>
+            <button class="button square set-config-trigger" aria-label="settings" onclick="openSettingsPopup(this.parentElement.parentElement);"><i class="las la-cog la-lg"></i></button>
+        </div>
+        <div class="popup hidden">
+            <div class="space-between">
+                <h2>Settings</h2>
+                <button class="button square popup-close-btn"><i class="las la-times"></i></button>
+            </div>
+            <form class="set-config-form">
+                <label>Title<input type="text" name="title" value=""/></label>
+                <div class="cols-2">
+                    card content languages
+                    <div class="cols-2">
+                        <label>frontside<input type="text" name="langFront" value=""/></label>
+                        <label>backside<input type="text" name="langBack" value=""/></label>
+                    </div>
+                </div>
+            </form>
+            <button class="button delete-btn" style="width: fit-content;" onclick="removeCardSet(this.parentElement.parentElement)">delete this set</button>
+            <form class="export-import-form">
+                <div class="space-between">
+                    <h3>export / import</h3>
+                    <div class="cols-2">
+                        delimiters
+                        <div class="cols-2" style="width: 6em;">
+                            <label class="center-text">card<input type="text" name="card" value="" required/></label>
+                            <label class="center-text">face<input type="text" name="face" value="" required/></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="textarea relative">
+                    <code class="source-input" contenteditable=""></code>
+                    <button type="button" class="button copy-btn" onclick="copyButton(this);" aria-label="copy to clipboard"> copy </button>
+                </div>
+            </form>
+        </div>`;
+
+    const cards = document.createElement('div');
+    cards.classList.add('flash-cards');
+
+    const cardFormWrapper = document.createElement('div');
+    cardFormWrapper.classList.add('card', 'card-settings', 'create', 'hidden');
+    cardFormWrapper.setAttribute('aria-disabled', 'true');
+
+    const cardForm = document.createElement('form');
+    cardForm.classList.add('new-card-form');
+    cardForm.innerHTML = `
+            <input type="text" placeholder="front side" name="front" required/>
+            <input type="text" placeholder="back side" name="back" required/>
+            <button class="button" type="submit">add card</button>`
+    cardForm.addEventListener('submit', createCardEvent);
+    cardFormWrapper.append(cardForm);
+
+    const modifyButton = document.createElement('div');
+    modifyButton.classList.add('card', 'card-settings', 'modify');
+    modifyButton.innerHTML = `
+            <button class="card-flipper" aria-label="modify these flashcards"></button>
+            <div class="card-face front"><i class="las la-tools la-3x"></i></div>
+            <div class="card-face back"><i class="las la-times la-3x"></i></div>`;
+    modifyButton.addEventListener('click', modifyCardsEvent);
+
+    cards.append(renderCardList(data.cards, data.props), cardFormWrapper, modifyButton);
+    set.append(cards);
+
+    return set;
+}
+function removeCardSet(set) {
+    const keyframes = [
+        {transform: 'scale(1)'},
+        {transform: 'scale(0)'}
+    ];
+    set.animate(keyframes, ANIMATION_TIMING).finished.then(() => {
+        set.remove();
+        saveAll();
+    });
 }
 
 /* popup functionality */
@@ -252,7 +387,7 @@ function openSettingsPopup(set) {
             popup.classList.add('hidden');
         });
         trigger.removeAttribute('disabled');
-        save(set);
+        saveAll();
     }
     closeButton.addEventListener('click', closeSettingsPopupEvent, {once: true});
     // TODO: make clicking anywhere but the popup close the popup
@@ -271,24 +406,18 @@ function settingsUpdateEvent(InputEvent) {
     const inputs = InputEvent.target.form.elements;
     const set = InputEvent.target.form.parentElement.parentElement;
     const newTitle = inputs.title.value.trim();
-    const newLangFront = inputs.langFront.value.trim();
-    const newLangBack = inputs.langBack.value.trim();
+    const newProps = [
+        {lang: inputs.langFront.value.trim()},
+        {lang: inputs.langBack.value.trim()}
+    ];
 
     if (newTitle !== set.dataset.title) {
-        set.dataset.title = newTitle;
-        set.querySelector('.set-title').innerText = newTitle;
+        setTitle(set, newTitle);
     }
-    if (newLangFront !== set.dataset.langFront) {
-        set.dataset.langFront = newLangFront;
-        set.querySelectorAll('.front > p').forEach((elem) => {
-            elem.setAttribute('lang', newLangFront);
-        });
-    }
-    if (newLangBack !== set.dataset.langBack) {
-        set.dataset.langBack = newLangBack;
-        set.querySelectorAll('.back > p').forEach((elem) => {
-            elem.setAttribute('lang', newLangBack);
-        });
+
+    // hack to deep compare objects
+    if (JSON.stringify(newProps) !== JSON.stringify(getProps(set))) {
+        setProps(set, newProps);
     }
 }
 
@@ -309,7 +438,7 @@ function exportUpdateEventHandlerFactory(ExportImportForm) {
             const newProps = {
                 card: delimInputs.card.value.replace('\\n', '\n'),
                 face: delimInputs.face.value.replace('\\n', '\n'),
-                source: sourceInput.innerText.trim()
+                source: sourceInput.innerText
             };
             if (oldProps.card !== newProps.card || oldProps.face !== newProps.face) {
                 // delimiter values changed, rerender source
@@ -322,10 +451,10 @@ function exportUpdateEventHandlerFactory(ExportImportForm) {
                 // source changed, import it
                 try {
                     const newCards = importCards(newProps.source, newProps.face, newProps.card);
-                    findCards(set).forEach(card => {
+                    getCards(set).forEach(card => {
                         card.remove();
                     });
-                    set.querySelector('.flash-cards').prepend(createCardList(...newCards));
+                    set.querySelector('.flash-cards').prepend(renderCardList(...newCards));
                     /* the cards' state gets messed up when the source is edited while modification mode is on
                     TODO: generate the cards so that they are aligned with the modification mode
                      */
@@ -355,7 +484,7 @@ function startDragEvent (mouseDownEvent) {
         return;
     }
     const set = card.parentElement;
-    const cards = findCards(set);
+    const cards = getCards(set);
     const setRect = set.getBoundingClientRect();
     const cardRect = card.getBoundingClientRect();
     // track the DOMElement in each position throughout the lifetime of the drag. initialized to [0, 1, 2, ...]
@@ -445,15 +574,15 @@ function createCardEvent(submitEvent) {
 
     // only add a new card when the form is valid and the set is in modify mode
     if (front && back && set.querySelector('.modify.flipped')) {
-        const nextCardIndex = findCards(set).length
-        const newCard = renderCard(front, back, nextCardIndex);
+        const nextCardIndex = getCards(set).length
+        const newCard = renderCard(front, back, getProps(set), nextCardIndex);
         // update the new Card's values so that it behaves under modify mode (renderCard assumes modify mode is off)
         newCard.classList.add('modifying');
         newCard.firstElementChild.toggleAttribute('disabled');  // disable the card flip button
         newCard.addEventListener('mousedown', startDragEvent);
         // make the edit and delete buttons clickable
         const tools = newCard.querySelector('.modify-tools');
-        for (tool of tools.children) {
+        for (const tool of tools.children) {
             tool.removeAttribute('disabled');
         }
         tools.addEventListener('click', editCardEvent);
@@ -474,15 +603,24 @@ function createCardEvent(submitEvent) {
         form.reset();
     }
 }
-document.querySelectorAll('.create form').forEach(form => {
-    form.addEventListener('submit', createCardEvent);
-});
+
+function createSetEvent(clickEvent) {
+    const emptyCardSet = {
+        title: 'new set',
+        props: [{lang: 'en'}, {lang: 'en'}],
+        cards: [['hello!', 'i love u!']]
+    }
+    const newSet = renderCardSet(emptyCardSet);
+    newSet.classList.add('hidden');
+    contentWrapper.append(newSet);
+    growCard(newSet);
+}
 
 // Handles click events for the modification buttons (edit, delete) on each card
 function editCardEvent(clickEvent) {
     const card = clickEvent.currentTarget.parentElement;
     // delete button pressed
-    if (clickEvent.target.classList.contains('button-delete')) {
+    if (clickEvent.target.classList.contains('delete-btn')) {
         // shrink the card to be deleted
         const cardIndex = readInt(card, 'data-index');
         shrinkCard(card).finished.then( function() {
@@ -502,7 +640,7 @@ function editCardEvent(clickEvent) {
             card.setAttribute('data-index', (index - 1).toString());
         });
 
-    } else if (clickEvent.target.classList.contains('button-edit')) {
+    } else if (clickEvent.target.classList.contains('edit-btn')) {
         // edit button pressed
         card.classList.toggle('editable');
         clickEvent.target.setAttribute('aria-pressed', (clickEvent.target.getAttribute('aria-pressed') === 'false').toString());
@@ -543,7 +681,7 @@ function toggleModifyCard(card) {
     // update the aria-expanded attribute
     tools.setAttribute('aria-expanded', (tools.getAttribute('aria-expanded') !== "true").toString());
     // toggle the selectablilty of the tools
-    for (tool of tools.children) {
+    for (const tool of tools.children) {
         tool.toggleAttribute('disabled');
     }
 }
@@ -567,7 +705,7 @@ function modifyCardsEvent(clickEvent) {
         const newPos = getSlotRect(numCards - 2);
         const oldPos = getSlotRect(numCards - 1);
         slideCard(button, oldPos.x - newPos.x, oldPos.y - newPos.y);
-        save(set);
+        saveAll();
     } else {
         // show the form
         growCard(newCardForm);
@@ -577,31 +715,49 @@ function modifyCardsEvent(clickEvent) {
     }
 
     // toggle the modification state of all the cards in the set
-    findCards(set).forEach(toggleModifyCard);
+    getCards(set).forEach(toggleModifyCard);
 }
-document.querySelectorAll('.modify').forEach( button => {
-    button.addEventListener('click', modifyCardsEvent);
+
+
+// Example sets
+const sample = [{
+        title: "I'm a set of flash cards!",
+        props: [{lang: 'en'}, {lang: 'en'}],
+        cards: [
+            ["i'm a flash card!", "you are not a flash card!"],
+            ["click me!!", "do it again!!"],
+            ["i wanna change the set title!", "click the gear in the top right!!"],
+            ["edit me by clicking over here -->", "drag me so i don't make sense!!"]]
+    }];
+
+const french = [
+    {
+        title: 'translate the french terms to english',
+        props: [{lang: 'fr'}, {lang: 'en'}],
+        cards: [
+            ["de rien", "it's ok"],
+            ["je vous en prie", "don't mention it"],
+            ["je t'en prie", "you're welcome"],
+            ["excusez-moi", "excuse me"],
+            ["il n'y a pas de quoi", "there's nothing to get worked up about"],
+            ["ca s'ecrit comment?", "how is that written?"],
+            ["faire", "to do"]]
+    }];
+
+// Load the previous state from memory
+const data = JSON.parse(localStorage.getItem(COOKIE)) ?? sample;
+const contentWrapper = document.querySelector('.content')
+data.forEach(set => {
+    contentWrapper.append(renderCardSet(set));
 });
 
-// Create the initial cards
-const grid = document.querySelector('.flash-cards');
-const data = JSON.parse(localStorage.getItem(COOKIE));
-const defaultCards = [
-    ["de rien", "it's ok"],
-    ["je vous en prie", "don't mention it"],
-    ["je t'en prie", "you're welcome"],
-    ["excusez-moi", "excuse me"],
-    ["il n'y a pas de quoi", "there's nothing to get worked up about"],
-    ["ca s'ecrit comment?", "how is that written?"],
-    ["faire", "to do"]];
-grid.prepend(createCardList(...(data.cards ?? defaultCards)));
-const title = data.title ?? 'translate the french terms to english'
-document.querySelector('.flash-card-set').dataset.title = title;
-document.querySelector('.set-title').innerText = title;
-
 // Update global constants COLUMNS and GAP when the window resizes
+let GAP = document.querySelector('.card').offsetWidth + 16;
 window.addEventListener('resize', debounce(
     (resizeEvent) => {
         COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
         GAP = document.querySelector('.card:last-child').offsetWidth + 16;
     }, 500));
+
+// useful for fast debugging
+const set = document.querySelector('.flash-card-set');

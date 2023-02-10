@@ -13,59 +13,7 @@
 </head>
 <body>
     <div class="page-title"><h1>Flashcards</h1></div>
-    <div class="content">
-        <div class="flash-card-set" data-title="translate the french terms to english" data-lang-front="fr" data-lang-back="en">
-            <div class="space-between relative">
-                <h2 class="set-title">Translate the French terms to English</h2>
-                <button class="button square set-config-trigger" aria-label="settings" onclick="openSettingsPopup(this.parentElement.parentElement);"><i class="las la-cog la-lg"></i></button>
-            </div>
-            <div class="popup hidden">
-                <div class="space-between">
-                    <h2>Settings</h2>
-                    <button class="button square popup-close-btn"><i class="las la-times"></i></button>
-                </div>
-                <form class="set-config-form">
-                    <label>Title<input type="text" name="title" value=""/></label>
-                    <div class="cols-2">
-                        card content languages
-                        <div class="cols-2">
-                            <label>frontside<input type="text" name="langFront" value=""/></label>
-                            <label>backside<input type="text" name="langBack" value=""/></label>
-                        </div>
-                    </div>
-                </form>
-                <form class="export-import-form">
-                    <div class="space-between">
-                        <h3>export / import</h3>
-                        <div class="cols-2">
-                            delimiters
-                            <div class="cols-2" style="width: 6em;">
-                                <label class="center-text">card<input type="text" name="card" value="" required/></label>
-                                <label class="center-text">face<input type="text" name="face" value="" required/></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="textarea relative">
-                        <code class="source-input" contenteditable=""></code>
-                        <button type="button" class="button copy-btn" onclick="copyButton(this);" aria-label="copy to clipboard"> copy </button>
-                    </div>
-                </form>
-            </div>
-            <div class="flash-cards">
-                <div class="card card-settings create hidden" aria-disabled="true">
-                    <form class="new-card-form">
-                        <input type="text" placeholder="front side" name="front" required/>
-                        <input type="text" placeholder="back side" name="back" required/>
-                        <button class="button" type="submit">Add Card</button>
-                    </form>
-                </div>
-                <div class="card card-settings modify">
-                    <button class="card-flipper" aria-label="modify these flashcards"></button>
-                    <div class="card-face front"><i class="las la-tools la-3x"></i></div>
-                    <div class="card-face back"><i class="las la-times la-3x"></i></div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="content"><!-- flash cards sets get generated here --></div>
+    <button class="button new-set-btn" onclick="createSetEvent()">add a set</button>
 </body>
 </html>
