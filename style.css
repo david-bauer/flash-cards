@@ -30,6 +30,7 @@ body {
 
     margin: 0;
     padding-top: 5vh;
+    /*padding-bottom: 5vh;*/
     width: 100vw;
 
     display: flex;
@@ -56,7 +57,7 @@ button {
     font-size: inherit;
     color: inherit;
     border: 2px solid transparent;
-    border-radius: .25em;
+    border-radius: .5em;
     cursor: pointer;
 }
 /* prevent icons from stealing click events from their parent element */
@@ -96,10 +97,20 @@ i {
     width: 75%;
     padding: 2em;
     color: var(--brown);
+
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+}
+
+.content:empty::before {
+    text-align: center;
+    content: "it's rather empty in here... ";
+    color: dimgrey;
 }
 
 .flash-card-set {
-    position: relative;
+    position: relative; /* required for popup to position correctly */
 }
 
 .flash-cards {
@@ -217,7 +228,7 @@ i {
 
 .modify-tools .button {
     aspect-ratio: 1;
-    /*border-radius: .5rem;*/
+    padding: .25rem;
 }
 
 
@@ -306,6 +317,7 @@ input[type="text"]:focus {
     transition: transform var(--animation-speed),
                 background-color var(--animation-speed),
                 color var(--animation-speed);
+    padding: .25em .5em;
 }
 .button:is(:hover,:focus) {
     background-color: var(--brown);
@@ -336,6 +348,14 @@ input[type="text"]:focus {
     transform: translate3d(1px, 1px, 0);
     background-color: var(--pink);
     color: var(--white);
+}
+
+.new-set-btn {
+    padding: 1em;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    box-shadow: var(--shadow-elevation-medium);
+    font-family: sans-serif;
 }
 
 .popup {
@@ -379,7 +399,7 @@ code:focus {
     position: absolute;
     right: 10px;
     bottom: 10px;
-    padding: .25em .5em .25em .5em;
+    /*padding: .25em .5em .25em .5em;*/
 }
 
 .center-text {

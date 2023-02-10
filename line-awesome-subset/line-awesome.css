@@ -43,4 +43,5 @@
   font-weight: 900;
   font-display: auto;
   src: url("fonts/la-solid-900.woff2") format("woff2"), url("fonts/la-solid-900.woff") format("woff");
+  unicode-range: U+f7d9, U+F00d, U+f305, U+f2ed, U+f013;
 }
