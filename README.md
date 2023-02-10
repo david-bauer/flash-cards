@@ -1,7 +1,6 @@
 # Flashcards App
 
-Just a small app that lets users create and edit sets of two-sided flashcards
-Good practice for html, css, and javascript
+Just a small webpage that lets users create and edit sets of two-sided flashcards. You would probably never use this over quizlet. It was good practice for html, css, and javascript.
 
 ## Current Functionality:
 
@@ -12,11 +11,12 @@ Good practice for html, css, and javascript
 - Card reorganization (drag them to new positions)
 - Fancy animations for the above four
 - Tooltips
-- Pretty styling
+- Pretty styling 
+- Multiple sets on one page
+- Options panel
+- Import cards
+- Export cards
 
 ## Future Functionality:
 
-- Multiple sets on one page
-- Import cards
-- Export cards
 - Saving sets to somewhere
