@@ -6,20 +6,22 @@ const COOKIE = 'cards'
 /* helper functions */
 
 function readInt(elem, ...attributes) {
-    // returns the first non-null attribute value as an integer.
+    // returns the first defined attribute value as an integer.
     // if the first attribute does not exist, return the value of the second, and so on...
     const firstValidAttribute = attributes.find(attempt => {
         return (elem.getAttribute(attempt) !== null);
     });
     if (firstValidAttribute === undefined) {
-        return undefined;
+        throw ReferenceError(`None of the provided attributes (${attributes.join(', ')}) contained a defined value`)
     }
     return parseInt(elem.getAttribute(firstValidAttribute));
 }
+
 function toPx(value) {
     /* converts a value to a string and appends 'px' to the end */
     return value.toString() + 'px';
 }
+
 function squish(num, min, max) {
     // returns the value closest to 'num' within a boundary that slightly exceeds 'min' and 'max'
     // when num surpasses the boundary, the excess is logarithmically reduced for smooth transition
@@ -37,24 +39,27 @@ function squish(num, min, max) {
     }
     return num;
 }
+
 function clamp(num, min, max) {
     // returns the value closest to num while remaining within the boundary defined by min and max
     return Math.min(Math.max(num, min), max);
 }
+
 function debounce(callback, delay) {
     /* returns a function that will only trigger once if it is called multiple times within delay seconds
     * used to increase performance on trigger-happy events */
     let timer = null;
 
-    return (event) => {
+    return (...args) => {
         clearTimeout(timer);
         timer = setTimeout(() => {
-            callback(event);
+            callback(...args);
         }, delay);
     }
 }
+
 function fallback(data, fallbackData) {
-    // fills missing properties of data with properties of fallBackData
+    // fills missing properties of an object with properties of fallBackData
     Object.keys(fallbackData).forEach(key => {
         if (!(key in data)) {
             data[key] = fallbackData[key];
@@ -63,145 +68,11 @@ function fallback(data, fallbackData) {
     return data;
 }
 
-function getSlotRect(index) {
-    // returns a DOMRect representing a slot's location relative to the cardset container
-    return new DOMRect((GAP) * (index % COLUMNS),
-        (GAP) * Math.floor(index / COLUMNS),
-        GAP, GAP);
-}
-function getClosestSlot(x, y) {
-    // returns the index of the slot closest to the point (x, y) relative to the cardset container
-    return Math.round(x / GAP) + COLUMNS * Math.round(y / GAP);
-}
-function getProps(set) {
-    const props = [{}, {}];
-    Object.entries(set.dataset).forEach(([key, value]) => {
-        if (key.includes('Front')) {
-            props[0][key.slice(0, -5)] = value;
-        } else if (key.includes('Back')) {
-            props[1][key.slice(0, -4)] = value;
-        }
-    });
-    return props;
-}
-function getCards(set) {
-    // returns an HTMLCollection of all the cards in a card set
-    return set.querySelectorAll('.card:not(.card-settings)')
-}
-function readCards(setElem) {
-    // returns a list of the card face pairs in setElem
-    let cards = [];
-    getCards(setElem).forEach(cardElem => {
-        const faceElems = cardElem.querySelectorAll('.card-face');
-        cards.push([faceElems[0].innerText.trim(), faceElems[1].innerText.trim()]);
-    });
-    return cards;
-}
-function exportCards(setElem, faceSeparator, cardSeparator) {
-    // returns a string representation of the cards in setElem
-    return readCards(setElem).reduce((total, cardText, index, set) => {
-        if (index < set.length - 1) {
-            return total + cardText[0] + faceSeparator + cardText[1] + cardSeparator;
-        } else { // don't print a cardSeparator after the last card
-            return total + cardText[0] + faceSeparator + cardText[1];
-        }
-    }, '');
-}
-function importCards(cardString, faceSeparator, cardSeparator) {
-    // returns a list of card face pairs from a string
-    const cards = cardString.split(cardSeparator);
-    return cards.map((card, index) => {
-        const faces = card.split(faceSeparator);
-        if (faces.length !== 2){
-            throw SyntaxError(`Card import failed due to incorrectly formatted data: each card must have exactly two faces. \n Card ${index} has ${faces.length}: '${faces.join(',')}'`);
-        }
-        return faces;
-    });
-}
-function readSet(set) {
-    return {
-        title: set.dataset.title,
-        props: getProps(set),
-        cards: readCards(set)
-    };
-}
-function saveAll() {
-    const setList = [];
-    document.querySelectorAll('.flash-card-set').forEach(set => {
-        setList.push(readSet(set));
-    })
-    localStorage.setItem(COOKIE, JSON.stringify(setList));
-}
 
-function copyButton(button) {
-    // copies the text of the previous element to the clipboard and animates the button
-    navigator.clipboard.writeText(button.previousElementSibling.innerText.trim()).then(() => {
-        // change the label of the button to indicate that something has happened
-        const oldLabel = button.getAttribute('aria-label');
-        button.setAttribute('aria-label', 'copied!');
-        button.setAttribute('aria-pressed', 'true');
-        // reset the button label a second later
-        setTimeout(() => {
-            button.setAttribute('aria-label', oldLabel);
-            button.setAttribute('aria-pressed', 'false');
-        }, 2000);
-    });
-}
-function slideCard(card, distX, distY) {
-    // Plays and returns an animation where the card moves to its original position from (distX, distY)
-    const flipped = card.classList.contains('flipped') ? ' rotateY(180deg)' : '';
-    const translate = [{transform: `translate3d(${toPx(distX)}, ${toPx(distY)}, 0)` + flipped},
-        {transform: `translate3d(0, 0, 0)` + flipped}];
-    return card.animate(translate, ANIMATION_TIMING);
-}
-function shrinkCard(card) {
-    // Plays and returns an animation where the card shrinks completely after being removed from the normal flow
-    // remove the card from the normal flow (so that the rest of the cards can move left)
-    card.style.left = toPx(card.offsetLeft);
-    card.style.top = toPx(card.offsetTop);
-    card.style.width = toPx(card.offsetWidth);
-    card.style.height = toPx(card.offsetHeight);
-    card.style.position = 'absolute';
-    // shrink it
-    const animation = card.animate([{transform: 'scale(1)'}, {transform: 'scale(0)'}], ANIMATION_TIMING);
-    animation.finished.then(value => {
-        card.removeAttribute('style');
-        return value;
-    });
-    return animation;
-}
-function growCard(card) {
-    // Inserts a card into the normal flow and then plays and returns an animation where the card grows from nothing
-    card.classList.remove('hidden');
-    const grow = [{transform: `scale(0)`},
-                  {transform: 'scale(1)'}];
-    return card.animate(grow, ANIMATION_TIMING);
-}
-function flipCard(card) {
-    card.classList.toggle('flipped');
-}
-function setTitle(set, newTitle) {
-    set.dataset.title = newTitle;
-    set.querySelector('.set-title').innerText = newTitle;
-}
-function setProps(set, props) {
-    function helper(propsSide, side) {
-        const cards = set.querySelectorAll(`.${side.toLowerCase()} > p`);
-        Object.entries(propsSide).forEach(([key, value]) => {
-            set.dataset[key + side] = value;
-
-            if (cards) {
-                cards.forEach(card => {
-                    card.setAttribute(key, value);
-                });
-            }
-        });
-    }
-    helper(props[0], 'Front');
-    helper(props[1], 'Back');
-}
+/* card generation */
 
 function renderFace(side, content, props) {
+    // helper function for renderCard that creates one side of the card
     const face = document.createElement('div');
     face.classList.add('card-face');
     face.classList.add(side);
@@ -219,19 +90,9 @@ function renderFace(side, content, props) {
 
     return face;
 }
+
 function renderCard(front, back, props, index) {
-    /*
-    Returns an HTMLElement that looks like this:
-    <div class="card" data-index="0">
-        <button class="card-flipper">/<button>
-        <div class="buttons">
-            <button class="button button-edit"><i class="las la-edit"></i></button>
-            <button class="button button-delete">i class="las la-trash-alt"></i></button>
-        </div>
-        <div class="front" lang="fr">french side</div>
-        <div class="back" lang="en">english side</div>
-    </div>
-     */
+    // returns an HTMLElement that represents a flash card
     const card = document.createElement('div');
     card.classList.add('card');
 
@@ -245,7 +106,7 @@ function renderCard(front, back, props, index) {
 
     card.prepend(button);
     card.append(renderFace('front', front, props[0]),
-                renderFace('back', back, props[1]));
+        renderFace('back', back, props[1]));
 
     if (index !== undefined) {
         card.setAttribute('data-index', index);
@@ -253,6 +114,7 @@ function renderCard(front, back, props, index) {
 
     return card;
 }
+
 function renderCardList(cards, props) {
     // returns a DocumentFragment containing cards created from the parameters
     const list = new DocumentFragment();
@@ -263,7 +125,51 @@ function renderCardList(cards, props) {
     });
     return list;
 }
+
+
+/* card animations */
+
+function slideCard(card, distX, distY) {
+    // plays and returns an animation where the card moves to its original position from (distX, distY)
+    const flipped = card.classList.contains('flipped') ? ' rotateY(180deg)' : '';
+    const translate = [{transform: `translate3d(${toPx(distX)}, ${toPx(distY)}, 0)` + flipped},
+        {transform: `translate3d(0, 0, 0)` + flipped}];
+    return card.animate(translate, ANIMATION_TIMING);
+}
+
+function shrinkCard(card) {
+    // plays and returns an animation where the card shrinks completely after being removed from the normal flow
+    card.style.left = toPx(card.offsetLeft);
+    card.style.top = toPx(card.offsetTop);
+    card.style.width = toPx(card.offsetWidth);
+    card.style.height = toPx(card.offsetHeight);
+    card.style.position = 'absolute';
+    // the card has been removed from the normal flow (the rest of the cards have moved left) -- now shrink it
+    const animation = card.animate([{transform: 'scale(1)'}, {transform: 'scale(0)'}], ANIMATION_TIMING);
+    animation.finished.then(value => {
+        card.removeAttribute('style');
+        return value;
+    });
+    return animation;
+}
+
+function growElem(card) {
+    // inserts a card into the normal flow and then plays and returns an animation where the card grows from nothing
+    card.classList.remove('hidden');
+    const grow = [{transform: `scale(0)`},
+        {transform: 'scale(1)'}];
+    return card.animate(grow, ANIMATION_TIMING);
+}
+
+function flipCard(card) {
+    card.classList.toggle('flipped');
+}
+
+
+/* card set generation and property management */
+
 function renderCardSet(data) {
+    // returns an HTML element representing a set of flash cards from an object
     fallback(data, {
         title: 'title missing',
         props: [{lang: 'missing'}, {lang: 'missing'}],
@@ -308,7 +214,7 @@ function renderCardSet(data) {
                 </div>
                 <div class="textarea relative">
                     <code class="source-input" contenteditable=""></code>
-                    <button type="button" class="button copy-btn" onclick="copyButton(this);" aria-label="copy to clipboard"> copy </button>
+                    <button type="button" class="button copy-btn" onclick="copyToClipboardButton(this);" aria-label="copy to clipboard"> copy </button>
                 </div>
             </form>
             <button type="button" class="button delete-btn" style="width: fit-content;" onclick="removeCardSet(this.parentElement.parentElement)">delete this set</button>
@@ -348,7 +254,9 @@ function renderCardSet(data) {
 
     return set;
 }
+
 function removeCardSet(set) {
+    // shrinks a card set to nothing and then removes it from the DOM
     const keyframes = [
         {transform: 'scale(1)'},
         {transform: 'scale(0)'}
@@ -359,13 +267,124 @@ function removeCardSet(set) {
     });
 }
 
+function getSlotRect(index) {
+    // returns a DOMRect representing a slot's location relative to the cardset container
+    return new DOMRect((GAP) * (index % COLUMNS),
+        (GAP) * Math.floor(index / COLUMNS),
+        GAP, GAP);
+}
+
+function getClosestSlot(x, y) {
+    // returns the index of the slot closest to the point (x, y) relative to the cardset container
+    return Math.round(x / GAP) + COLUMNS * Math.round(y / GAP);
+}
+
+function getCards(set) {
+    // returns an HTMLCollection of all the cards in a card set
+    return set.querySelectorAll('.card:not(.card-settings)')
+}
+
+function readCards(set) {
+    // returns a list of lists containing the text on the front and back of every card in a set.
+    let cards = [];
+    getCards(set).forEach(cardElem => {
+        const faceElems = cardElem.querySelectorAll('.card-face');
+        cards.push([faceElems[0].innerText.trim(), faceElems[1].innerText.trim()]);
+    });
+    return cards;
+}
+
+function exportCards(set, faceDelimiter, cardDelimiter) {
+    // returns a string representation of the cards in a set.
+    return readCards(set).reduce((total, cardText, index) => {
+        if (index < set.length - 1) {
+            return total + cardText[0] + faceDelimiter + cardText[1] + cardDelimiter;
+        } else { // don't print a cardDelimiter after the last card
+            return total + cardText[0] + faceDelimiter + cardText[1];
+        }
+    }, '');
+}
+
+function importCards(cardString, faceSeparator, cardSeparator) {
+    // returns a list of card face pairs from a string
+    const cards = cardString.split(cardSeparator);
+    return cards.map((card, index) => {
+        const faces = card.split(faceSeparator);
+        if (faces.length !== 2){
+            throw SyntaxError(`Card import failed due to incorrectly formatted data: each card must have exactly two faces. \n Card ${index} has ${faces.length}: '${faces.join(',')}'`);
+        }
+        return faces;
+    });
+}
+
+function readSet(set) {
+    // creates an object containing the title, properties, and the text on each card in a set
+    return {
+        title: set.dataset.title,
+        props: getProps(set),
+        cards: readCards(set)
+    };
+}
+
+function setTitle(set, newTitle) {
+    // sets the title of a card set
+    set.dataset.title = newTitle;
+    set.querySelector('.set-title').innerText = newTitle;
+}
+
+function setProps(set, props) {
+    // stores the properties of a card set as data-* attributes on the set element and on the relevant card faces in the set
+    function helper(propsSide, side) {
+        const cards = set.querySelectorAll(`.${side.toLowerCase()} > p`);
+        Object.entries(propsSide).forEach(([key, value]) => {
+            set.dataset[key + side] = value;
+
+            if (cards) {
+                cards.forEach(card => {
+                    card.setAttribute(key, value);
+                });
+            }
+        });
+    }
+    helper(props[0], 'Front');
+    helper(props[1], 'Back');
+}
+
+function getProps(set) {
+    // returns a properties object containing the properties of a given card set
+    const props = [{}, {}];
+    Object.entries(set.dataset).forEach(([key, value]) => {
+        if (key.includes('Front')) {
+            props[0][key.slice(0, -5)] = value;
+        } else if (key.includes('Back')) {
+            props[1][key.slice(0, -4)] = value;
+        }
+    });
+    return props;
+}
+
+
+/* local storage management */
+
+function saveAll() {
+    // writes the defining data of each set on the page to local storage
+    const setList = [];
+    document.querySelectorAll('.flash-card-set').forEach(set => {
+        setList.push(readSet(set));
+    })
+    localStorage.setItem(COOKIE, JSON.stringify(setList));
+}
+
+
 /* popup functionality */
+
 function openSettingsPopup(set) {
+    // opens the settings popup and populates it with current information about the set
     // extract key properties from the DOM (title, language, etc.)
     const popup = set.querySelector('.popup');
     const trigger = set.querySelector('.set-config-trigger');
     const defaultDelimiters = {face:', ', card: '\\n'};
-    const source = exportCards(set, defaultDelimiters.face, defaultDelimiters.card.replace('\\n', '\n'));
+    const source = exportCards(set, defaultDelimiters.face, defaultDelimiters.card.replace('\\n', '<br>'));
 
     // update the forms with the extracted properties
     const configForm = popup.querySelector('.set-config-form');
@@ -378,7 +397,7 @@ function openSettingsPopup(set) {
     const exportForm = popup.querySelector('.export-import-form');
     exportForm.elements.face.value = defaultDelimiters.face;
     exportForm.elements.card.value = defaultDelimiters.card;
-    set.querySelector('.source-input').innerText = source;
+    set.querySelector('.source-input').textContent = source;
     const exportUpdateEvent = exportUpdateEventHandlerFactory(exportForm);
     exportForm.addEventListener('input', exportUpdateEvent);
 
@@ -409,6 +428,7 @@ function openSettingsPopup(set) {
 }
 
 function settingsUpdateEvent(InputEvent) {
+    // updates the title and properties of the set when the user changes an associated form input
     const inputs = InputEvent.target.form.elements;
     const set = InputEvent.target.form.parentElement.parentElement;
     const newTitle = inputs.title.value.trim();
@@ -428,13 +448,14 @@ function settingsUpdateEvent(InputEvent) {
 }
 
 function exportUpdateEventHandlerFactory(ExportImportForm) {
+    // returns a debounced event handler that updates the import / export form and the document when changes occur
     const set = ExportImportForm.parentElement.parentElement;
     const delimInputs = ExportImportForm.elements;
     const sourceInput = set.querySelector('.source-input');
     let oldProps = {
-        card: ExportImportForm.elements.card.value.replace('\\n', '\n'),
-        face: ExportImportForm.elements.face.value.replace('\\n', '\n'),
-        source: undefined,
+        card: ExportImportForm.elements.card.value.replace('\\n', '<br>'),
+        face: ExportImportForm.elements.face.value.replace('\\n', '<br>'),
+        source: sourceInput.textContent
     };
     let timer = null;
 
@@ -442,9 +463,9 @@ function exportUpdateEventHandlerFactory(ExportImportForm) {
         clearTimeout(timer);
         timer = setTimeout(() => {
             const newProps = {
-                card: delimInputs.card.value.replace('\\n', '\n'),
-                face: delimInputs.face.value.replace('\\n', '\n'),
-                source: sourceInput.innerText.replace('\<br>', '\n')
+                card: delimInputs.card.value.replace('\\n', '<br>'),
+                face: delimInputs.face.value.replace('\\n', '<br>'),
+                source: sourceInput.textContent
             };
             console.table(oldProps);
             console.table(newProps);
@@ -456,7 +477,7 @@ function exportUpdateEventHandlerFactory(ExportImportForm) {
                 // update oldProps
                 oldProps = newProps;
             } else if (oldProps.source !== newProps.source) {
-                // source changed, import it
+                // source changed, regenerate this set according to the new source
                 try {
                     const newCards = importCards(newProps.source, newProps.face, newProps.card);
                     getCards(set).forEach(card => {
@@ -479,14 +500,31 @@ function exportUpdateEventHandlerFactory(ExportImportForm) {
     }
 }
 
-/* Event Handling */
+function copyToClipboardButton(button) {
+    // copies the text of the previous element to the clipboard and animates the button
+    navigator.clipboard.writeText(button.previousElementSibling.innerText.trim()).then(() => {
+        // change the label of the button to indicate that something has happened
+        const oldLabel = button.getAttribute('aria-label');
+        button.setAttribute('aria-label', 'copied!');
+        button.setAttribute('aria-pressed', 'true');
+        // reset the button label a second later
+        setTimeout(() => {
+            button.setAttribute('aria-label', oldLabel);
+            button.setAttribute('aria-pressed', 'false');
+        }, 2000);
+    });
+}
+
+
+/* event handling */
+
 function flipCardEvent(clickEvent) {
+    // flips a card when it is clicked
     flipCard(clickEvent.currentTarget);
 }
 
-// cards can be dragged and repositioned during editing mode
 function startDragEvent (mouseDownEvent) {
-    // prepares a card to be dragged
+    // prepares a card to be dragged and repositioned during editing mode
     const card =  mouseDownEvent.currentTarget;
     if (card.classList.contains('editable') ||  mouseDownEvent.target.classList.contains('button')) {
         return;
@@ -572,9 +610,9 @@ function startDragEvent (mouseDownEvent) {
     document.addEventListener('mouseup', finishDrag, {once: true, passive: true});
 }
 
-// Handles submit events for the create card form
 function createCardEvent(submitEvent) {
-    submitEvent.preventDefault();
+    // handles submit events for the create card form
+    submitEvent.preventDefault();  // stop page refresh on form submit
     const form = submitEvent.currentTarget;
     const front = form.elements.front.value.trim();
     const back = form.elements.back.value.trim();
@@ -597,7 +635,7 @@ function createCardEvent(submitEvent) {
 
         // insert the new card and animate it growing
         set.insertBefore(newCard, form.parentElement);
-        growCard(newCard);
+        growElem(newCard);
 
         // the cards after the new one get pushed to the right--animate it with FLIP
         const buttons = set.querySelectorAll('.card-settings');
@@ -612,7 +650,8 @@ function createCardEvent(submitEvent) {
     }
 }
 
-function createSetEvent(clickEvent) {
+function createSetEvent() {
+    // creates a new set when the 'add set' button at the bottom of the page is clicked
     const emptyCardSet = {
         title: 'new set',
         props: [{lang: 'en'}, {lang: 'en'}],
@@ -621,11 +660,11 @@ function createSetEvent(clickEvent) {
     const newSet = renderCardSet(emptyCardSet);
     newSet.classList.add('hidden');
     contentWrapper.append(newSet);
-    growCard(newSet);
+    growElem(newSet);
 }
 
-// Handles click events for the modification buttons (edit, delete) on each card
 function editCardEvent(clickEvent) {
+    // handles click events for the modification buttons (edit, delete) on each card
     const card = clickEvent.currentTarget.parentElement;
     // delete button pressed
     if (clickEvent.target.classList.contains('delete-btn')) {
@@ -694,9 +733,8 @@ function toggleModifyCard(card) {
     }
 }
 
-// When the modify button is pressed, allow all the cards to be repositioned, edited, or deleted
 function modifyCardsEvent(clickEvent) {
-    // flip the button
+    // when the modify button is pressed, allow all the cards to be repositioned, edited, or deleted
     const button = clickEvent.currentTarget;
     const newCardForm = button.previousElementSibling;
     const set = button.parentElement;
@@ -716,7 +754,7 @@ function modifyCardsEvent(clickEvent) {
         saveAll();
     } else {
         // show the form
-        growCard(newCardForm);
+        growElem(newCardForm);
         const newPos = getSlotRect(numCards - 1);
         const oldPos = getSlotRect(numCards - 2);
         slideCard(button, oldPos.x - newPos.x, oldPos.y - newPos.y);
@@ -727,7 +765,7 @@ function modifyCardsEvent(clickEvent) {
 }
 
 
-// Example sets
+// example sets
 const sample = [{
         title: "I'm a set of flash cards!",
         props: [{lang: 'en'}, {lang: 'en'}],
@@ -752,20 +790,20 @@ const french = [
             ["faire", "to do"]]
     }];
 
-// Load the previous state from memory
+// load the previous state from memory
 const data = JSON.parse(localStorage.getItem(COOKIE)) ?? sample;
 const contentWrapper = document.querySelector('.content')
 data.forEach(set => {
     contentWrapper.append(renderCardSet(set));
 });
 
-// Update global constants COLUMNS and GAP when the window resizes
+// update global constants COLUMNS and GAP when the window resizes
 let GAP = document.querySelector('.card').offsetWidth + 16;
 window.addEventListener('resize', debounce(
-    (resizeEvent) => {
+    () => {
         COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
         GAP = document.querySelector('.card:last-child').offsetWidth + 16;
     }, 500));
 
 // useful for fast debugging
-const set = document.querySelector('.flash-card-set');
+// const set = document.querySelector('.flash-card-set');
