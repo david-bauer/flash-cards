@@ -378,7 +378,7 @@ input[type="text"]:focus {
     position: relative;
 }
 
-code {
+.source-input {
     display: block;
     width: 100%;
     min-height: 10em;
@@ -390,7 +390,7 @@ code {
     overflow: auto;
 }
 
-code:focus {
+.source-input:focus {
     border: 3px dashed var(--brown);
     outline: none;
 }

@@ -61,7 +61,7 @@ function debounce(callback, delay) {
 function fallback(data, fallbackData) {
     // fills missing properties of an object with properties of fallBackData
     Object.keys(fallbackData).forEach(key => {
-        if (!(key in data)) {
+        if (!(key in data) || data[key] === '') {
             data[key] = fallbackData[key];
         }
     });
@@ -207,8 +207,8 @@ function renderCardSet(data) {
                     <div class="cols-2">
                         delimiters
                         <div class="cols-2" style="width: 6em; position:relative; top: -6px">
-                            <label class="center-text">card<input type="text" name="card" value="" required/></label>
-                            <label class="center-text">face<input type="text" name="face" value="" required/></label>
+                            <label class="center-text">face<input type="text" name="face" value=", " required/></label>
+                            <label class="center-text">card<input type="text" name="card" value="\\n" required/></label>
                         </div>
                     </div>
                 </div>
@@ -296,8 +296,8 @@ function readCards(set) {
 
 function exportCards(set, faceDelimiter, cardDelimiter) {
     // returns a string representation of the cards in a set.
-    return readCards(set).reduce((total, cardText, index) => {
-        if (index < set.length - 1) {
+    return readCards(set).reduce((total, cardText, index, cards) => {
+        if (index < cards.length - 1) {
             return total + cardText[0] + faceDelimiter + cardText[1] + cardDelimiter;
         } else { // don't print a cardDelimiter after the last card
             return total + cardText[0] + faceDelimiter + cardText[1];
@@ -306,7 +306,7 @@ function exportCards(set, faceDelimiter, cardDelimiter) {
 }
 
 function importCards(cardString, faceSeparator, cardSeparator) {
-    // returns a list of card face pairs from a string
+    // returns a list of card face pairs from a string, extremely unsafe, allows code injection
     const cards = cardString.split(cardSeparator);
     return cards.map((card, index) => {
         const faces = card.split(faceSeparator);
@@ -380,11 +380,8 @@ function saveAll() {
 
 function openSettingsPopup(set) {
     // opens the settings popup and populates it with current information about the set
-    // extract key properties from the DOM (title, language, etc.)
     const popup = set.querySelector('.popup');
     const trigger = set.querySelector('.set-config-trigger');
-    const defaultDelimiters = {face:', ', card: '\\n'};
-    const source = exportCards(set, defaultDelimiters.face, defaultDelimiters.card.replace('\\n', '<br>'));
 
     // update the forms with the extracted properties
     const configForm = popup.querySelector('.set-config-form');
@@ -395,9 +392,15 @@ function openSettingsPopup(set) {
     configForm.addEventListener('input', configUpdateEvent);
 
     const exportForm = popup.querySelector('.export-import-form');
-    exportForm.elements.face.value = defaultDelimiters.face;
-    exportForm.elements.card.value = defaultDelimiters.card;
-    set.querySelector('.source-input').textContent = source;
+    const delims = fallback(
+        {face: exportForm.elements.face.value, card: exportForm.elements.card.value},
+        {face:', ', card: '\\n'});
+    const source = exportCards(set, delims.face.replace('\\n', '\n'), delims.card.replace('\\n', '\n'));
+    console.log(delims);
+    console.log(source);
+    exportForm.elements.face.value = delims.face;
+    exportForm.elements.card.value = delims.card;
+    set.querySelector('.source-input').innerText = source;
     const exportUpdateEvent = exportUpdateEventHandlerFactory(exportForm);
     exportForm.addEventListener('input', exportUpdateEvent);
 
@@ -453,21 +456,21 @@ function exportUpdateEventHandlerFactory(ExportImportForm) {
     const delimInputs = ExportImportForm.elements;
     const sourceInput = set.querySelector('.source-input');
     let oldProps = {
-        card: ExportImportForm.elements.card.value.replace('\\n', '<br>'),
-        face: ExportImportForm.elements.face.value.replace('\\n', '<br>'),
-        source: sourceInput.textContent
+        face: ExportImportForm.elements.face.value.replace('\\n', '\n'),
+        card: ExportImportForm.elements.card.value.replace('\\n', '\n'),
+        source: sourceInput.innerText
     };
     let timer = null;
+    console.table(oldProps);
 
     return (InputEvent) => {
         clearTimeout(timer);
         timer = setTimeout(() => {
             const newProps = {
-                card: delimInputs.card.value.replace('\\n', '<br>'),
-                face: delimInputs.face.value.replace('\\n', '<br>'),
-                source: sourceInput.textContent
+                face: delimInputs.face.value.replace('\\n', '\n'),
+                card: delimInputs.card.value.replace('\\n', '\n'),
+                source: sourceInput.innerText
             };
-            console.table(oldProps);
             console.table(newProps);
             if (oldProps.card !== newProps.card || oldProps.face !== newProps.face) {
                 // delimiter values changed, rerender source
