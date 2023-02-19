@@ -180,13 +180,14 @@ function renderCardSet(data) {
     set.classList.add('flash-card-set');
     set.dataset.title = data.title;
     setProps(set, data.props);
-    /* add set header (title + popup) */
+    /* insert the set header (title + popup) */
     set.innerHTML = `
         <div class="space-between">
             <h2 class="set-title">${data.title}</h2>
             <button class="button square set-config-trigger relative" aria-label="settings" onclick="openSettingsPopup(this.parentElement.parentElement);"><i class="las la-cog la-lg"></i></button>
         </div>
         <div class="popup hidden">
+        <div class="popup-content">
             <div class="space-between">
                 <h2>Settings</h2>
                 <button class="button square popup-close-btn"><i class="las la-times"></i></button>
@@ -217,8 +218,8 @@ function renderCardSet(data) {
                     <button type="button" class="button copy-btn" onclick="copyToClipboardButton(this);" aria-label="copy to clipboard"> copy </button>
                 </div>
             </form>
-            <button type="button" class="button delete-btn" style="width: fit-content;" onclick="removeCardSet(this.parentElement.parentElement)">delete this set</button>
-        </div>`;
+            <button type="button" class="button delete-btn" style="width: fit-content;" onclick="removeCardSet(this.parentElement.parentElement.parentElement)">delete this set</button>
+        </div></div>`;
     /* TODO future popup features:
      * duplicate button
      * randomize order button
@@ -364,18 +365,6 @@ function getProps(set) {
 }
 
 
-/* local storage management */
-
-function saveAll() {
-    // writes the defining data of each set on the page to local storage
-    const setList = [];
-    document.querySelectorAll('.flash-card-set').forEach(set => {
-        setList.push(readSet(set));
-    })
-    localStorage.setItem(COOKIE, JSON.stringify(setList));
-}
-
-
 /* popup functionality */
 
 function openSettingsPopup(set) {
@@ -396,19 +385,23 @@ function openSettingsPopup(set) {
         {face: exportForm.elements.face.value, card: exportForm.elements.card.value},
         {face:', ', card: '\\n'});
     const source = exportCards(set, delims.face.replace('\\n', '\n'), delims.card.replace('\\n', '\n'));
-    console.log(delims);
-    console.log(source);
     exportForm.elements.face.value = delims.face;
     exportForm.elements.card.value = delims.card;
     set.querySelector('.source-input').innerText = source;
     const exportUpdateEvent = exportUpdateEventHandlerFactory(exportForm);
     exportForm.addEventListener('input', exportUpdateEvent);
 
-    // make the popup-close-btn remove event listeners and hide the popup
+    // clicking the popup-close-btn or outside the popup hides the popup
     const closeButton = popup.querySelector('.popup-close-btn');
     const closeSettingsPopupEvent = (clickEvent) => {
+        if (clickEvent.target !== popup && clickEvent.target !== closeButton) {
+            return
+        }
+        // remove the event listeners added when the popup opened
         configForm.removeEventListener('input', configUpdateEvent);
         exportForm.removeEventListener('input', exportUpdateEvent);
+        popup.removeEventListener('click', closeSettingsPopupEvent);
+        // fade out and hide the popup
         const fadeOut = [{opacity: 1},
             {opacity: 0}];
         popup.animate(fadeOut, ANIMATION_TIMING).finished.then(() => {
@@ -417,13 +410,13 @@ function openSettingsPopup(set) {
         trigger.removeAttribute('disabled');
         saveAll();
     }
-    closeButton.addEventListener('click', closeSettingsPopupEvent, {once: true});
-    // TODO: make clicking anywhere but the popup close the popup
+    popup.addEventListener('click', closeSettingsPopupEvent);
 
     // display the popup
     trigger.setAttribute('disabled', 'true');
-    popup.style.top = `calc(${trigger.offsetTop}px - 1rem)`;
-    popup.style.right = '-1rem';
+    popup.firstElementChild.style.top = `calc(-${trigger.offsetHeight}px - 1rem)`;
+    popup.firstElementChild.style.right = '-1rem';
+    popup.style.height = `calc(${popup.nextElementSibling.offsetHeight}px + 1em)`;
     popup.classList.remove('hidden');
     const fadeIn = [{opacity: 0},
                     {opacity: 1}];
@@ -433,7 +426,9 @@ function openSettingsPopup(set) {
 function settingsUpdateEvent(InputEvent) {
     // updates the title and properties of the set when the user changes an associated form input
     const inputs = InputEvent.target.form.elements;
-    const set = InputEvent.target.form.parentElement.parentElement;
+    // InputEvent.currentTarget is only available when the event is being processed. This event handler is debounced--the
+    // browser already considers the event 'handled' by the time this code is run, so InputEvent.currentTarget = null
+    const set = InputEvent.target.form.parentElement.parentElement.parentElement;
     const newTitle = inputs.title.value.trim();
     const newProps = [
         {lang: inputs.langFront.value.trim()},
@@ -444,7 +439,7 @@ function settingsUpdateEvent(InputEvent) {
         setTitle(set, newTitle);
     }
 
-    // hack to deep compare objects
+    // hack to deep compare objects--the objects' keys must be in the same order you'll get a false negative
     if (JSON.stringify(newProps) !== JSON.stringify(getProps(set))) {
         setProps(set, newProps);
     }
@@ -452,7 +447,7 @@ function settingsUpdateEvent(InputEvent) {
 
 function exportUpdateEventHandlerFactory(ExportImportForm) {
     // returns a debounced event handler that updates the import / export form and the document when changes occur
-    const set = ExportImportForm.parentElement.parentElement;
+    const set = ExportImportForm.parentElement.parentElement.parentElement;
     const delimInputs = ExportImportForm.elements;
     const sourceInput = set.querySelector('.source-input');
     let oldProps = {
@@ -461,7 +456,6 @@ function exportUpdateEventHandlerFactory(ExportImportForm) {
         source: sourceInput.innerText
     };
     let timer = null;
-    console.table(oldProps);
 
     return (InputEvent) => {
         clearTimeout(timer);
@@ -471,7 +465,7 @@ function exportUpdateEventHandlerFactory(ExportImportForm) {
                 card: delimInputs.card.value.replace('\\n', '\n'),
                 source: sourceInput.innerText
             };
-            console.table(newProps);
+            // console.table(newProps);
             if (oldProps.card !== newProps.card || oldProps.face !== newProps.face) {
                 // delimiter values changed, rerender source
                 const source = set.querySelector('.source-input');
@@ -519,7 +513,7 @@ function copyToClipboardButton(button) {
 }
 
 
-/* event handling */
+/* card event handling */
 
 function flipCardEvent(clickEvent) {
     // flips a card when it is clicked
@@ -613,59 +607,6 @@ function startDragEvent (mouseDownEvent) {
     document.addEventListener('mouseup', finishDrag, {once: true, passive: true});
 }
 
-function createCardEvent(submitEvent) {
-    // handles submit events for the create card form
-    submitEvent.preventDefault();  // stop page refresh on form submit
-    const form = submitEvent.currentTarget;
-    const front = form.elements.front.value.trim();
-    const back = form.elements.back.value.trim();
-    const set = form.parentElement.parentElement;
-
-    // only add a new card when the form is valid and the set is in modify mode
-    if (front && back && set.querySelector('.modify.flipped')) {
-        const nextCardIndex = getCards(set).length
-        const newCard = renderCard(front, back, getProps(set), nextCardIndex);
-        // update the new Card's values so that it behaves under modify mode (renderCard assumes modify mode is off)
-        newCard.classList.add('modifying');
-        newCard.firstElementChild.toggleAttribute('disabled');  // disable the card flip button
-        newCard.addEventListener('mousedown', startDragEvent);
-        // make the edit and delete buttons clickable
-        const tools = newCard.querySelector('.modify-tools');
-        for (const tool of tools.children) {
-            tool.removeAttribute('disabled');
-        }
-        tools.addEventListener('click', editCardEvent);
-
-        // insert the new card and animate it growing
-        set.insertBefore(newCard, form.parentElement);
-        growElem(newCard);
-
-        // the cards after the new one get pushed to the right--animate it with FLIP
-        const buttons = set.querySelectorAll('.card-settings');
-        buttons.forEach((button, index) => {
-            const dest = getSlotRect(index + nextCardIndex);
-            const src = getSlotRect(index + nextCardIndex + 1);
-            slideCard(button, dest.x - src.x, dest.y - src.y);
-        });
-
-        form.elements.front.focus();
-        form.reset();
-    }
-}
-
-function createSetEvent() {
-    // creates a new set when the 'add set' button at the bottom of the page is clicked
-    const emptyCardSet = {
-        title: 'new set',
-        props: [{lang: 'en'}, {lang: 'en'}],
-        cards: [['hello!', 'i love u!']]
-    }
-    const newSet = renderCardSet(emptyCardSet);
-    newSet.classList.add('hidden');
-    contentWrapper.append(newSet);
-    growElem(newSet);
-}
-
 function editCardEvent(clickEvent) {
     // handles click events for the modification buttons (edit, delete) on each card
     const card = clickEvent.currentTarget.parentElement;
@@ -699,6 +640,9 @@ function editCardEvent(clickEvent) {
         });
     }
 }
+
+
+/* card modification mode event handling */
 
 function toggleModifyCard(card) {
     /* transform a card into modification mode by
@@ -767,6 +711,61 @@ function modifyCardsEvent(clickEvent) {
     getCards(set).forEach(toggleModifyCard);
 }
 
+function createCardEvent(submitEvent) {
+    // handles submit events for the create card form
+    submitEvent.preventDefault();  // stop page refresh on form submit
+    const form = submitEvent.currentTarget;
+    const front = form.elements.front.value.trim();
+    const back = form.elements.back.value.trim();
+    const set = form.parentElement.parentElement;
+
+    // only add a new card when the form is valid and the set is in modify mode
+    if (front && back && set.querySelector('.modify.flipped')) {
+        const nextCardIndex = getCards(set).length
+        const newCard = renderCard(front, back, getProps(set), nextCardIndex);
+        // update the new Card's values so that it behaves under modify mode (renderCard assumes modify mode is off)
+        newCard.classList.add('modifying');
+        newCard.firstElementChild.toggleAttribute('disabled');  // disable the card flip button
+        newCard.addEventListener('mousedown', startDragEvent);
+        // make the edit and delete buttons clickable
+        const tools = newCard.querySelector('.modify-tools');
+        for (const tool of tools.children) {
+            tool.removeAttribute('disabled');
+        }
+        tools.addEventListener('click', editCardEvent);
+
+        // insert the new card and animate it growing
+        set.insertBefore(newCard, form.parentElement);
+        growElem(newCard);
+
+        // the cards after the new one get pushed to the right--animate it with FLIP
+        const buttons = set.querySelectorAll('.card-settings');
+        buttons.forEach((button, index) => {
+            const dest = getSlotRect(index + nextCardIndex);
+            const src = getSlotRect(index + nextCardIndex + 1);
+            slideCard(button, dest.x - src.x, dest.y - src.y);
+        });
+
+        form.elements.front.focus();
+        form.reset();
+    }
+}
+
+
+/* cardset functionality */
+
+function createSetEvent() {
+    // creates a new set when the 'add set' button at the bottom of the page is clicked
+    const emptyCardSet = {
+        title: 'new set',
+        props: [{lang: 'en'}, {lang: 'en'}],
+        cards: [['hello!', 'i love u!']]
+    }
+    const newSet = renderCardSet(emptyCardSet);
+    newSet.classList.add('hidden');
+    contentWrapper.append(newSet);
+    growElem(newSet);
+}
 
 // example sets
 const sample = [{
@@ -793,12 +792,42 @@ const french = [
             ["faire", "to do"]]
     }];
 
+
+/* local storage management */
+
+function loadState() {
+    // returns a documentFragment containing all the card sets saved in local storage
+    const data = JSON.parse(localStorage.getItem(COOKIE)) ?? sample;
+    const fragment = document.createDocumentFragment();
+    data.forEach(set => {
+        fragment.append(renderCardSet(set));
+    });
+    return fragment;
+}
+
+function saveAll() {
+    // writes the defining data of each set on the page to local storage
+    const setList = [];
+    document.querySelectorAll('.flash-card-set').forEach(set => {
+        setList.push(readSet(set));
+    })
+    localStorage.setItem(COOKIE, JSON.stringify(setList));
+}
+
+function resetAll(defaultState = null) {
+    // resets the cookie entirely or to an object, when provided
+    if (defaultState) {
+        localStorage.setItem(COOKIE, JSON.stringify(defaultState));
+    } else {
+        // delete the cookie
+        localStorage.removeItem(COOKIE);
+    }
+    loadState();
+}
+
+
 // load the previous state from memory
-const data = JSON.parse(localStorage.getItem(COOKIE)) ?? sample;
-const contentWrapper = document.querySelector('.content')
-data.forEach(set => {
-    contentWrapper.append(renderCardSet(set));
-});
+document.querySelector('.content').append(loadState());
 
 // update global constants COLUMNS and GAP when the window resizes
 let GAP = document.querySelector('.card').offsetWidth + 16;
@@ -808,5 +837,4 @@ window.addEventListener('resize', debounce(
         GAP = document.querySelector('.card:last-child').offsetWidth + 16;
     }, 500));
 
-// useful for fast debugging
-// const set = document.querySelector('.flash-card-set');
+// const s = document.querySelector('.flash-card-set');  // debug faster

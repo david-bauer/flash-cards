@@ -360,6 +360,13 @@ input[type="text"]:focus {
 
 .popup {
     position: absolute;
+    width: 100%;
+    background-color: rgba(255, 255, 255, .6);
+    z-index: 2;
+}
+
+.popup-content {
+    position: absolute;
     min-width: min-content;
     width: clamp(310px, 40%, 500px);
     background-color: var(--pink);
