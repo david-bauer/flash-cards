@@ -2,47 +2,57 @@
     box-sizing: border-box;
 }
 
+:root {
+    /* colors: */
+    --eggshell: 252, 252, 252;
+    --light-pink: 255, 226, 237;
+    --pink: 255, 175, 204;
+    --brown: 51, 38, 29;
+    --space: 66, 61, 68;
+    --coal: 13, 11, 14;
+    /* color variables must be saved like this so that opacity can be applied
+    (https://stackoverflow.com/questions/40010597/how-do-i-apply-opacity-to-a-css-color-variable) */
+
+    /* functional variables: */
+    --columns: 4;
+    --animation-speed: 150ms;
+}
+
 body {
-    /* colors */
-    --pink: #ffafcc;
-    --light-pink: #ffe2ed;
-    --gold: #ffd42b;
-    --brown: #33261D;
-    --white: #fcfcfc;
-
-    --accent: var(--gold);
-
     /* box shadow settings */
     --shadow-color: 339deg 48% 52%;
-    --shadow-elevation-medium:
+    --shadow-med:
             0.3px 0.5px 0.7px hsl(var(--shadow-color) / 0.36),
             0.8px 1.6px 2px -0.8px hsl(var(--shadow-color) / 0.36),
             2.1px 4.1px 5.2px -1.7px hsl(var(--shadow-color) / 0.36),
             5px 10px 12.6px -2.5px hsl(var(--shadow-color) / 0.36);
-    --shadow-elevation-low:
+    --shadow-low:
             0.3px 0.5px 0.7px hsl(var(--shadow-color) / 0.34),
             0.4px 0.8px 1px -1.2px hsl(var(--shadow-color) / 0.34),
             1px 2px 2.5px -2.5px hsl(var(--shadow-color) / 0.34);
 
-    /* functional variables */
-    --columns: 4;
-    --animation-speed: 150ms;
-
     margin: 0;
-    padding-top: 5vh;
-    /*padding-bottom: 5vh;*/
-    width: 100vw;
+    padding: 0;
+}
+
+#footer {
+    margin: 0;
+    padding: 1em;
+    width: 100%;
+    background-color: rgb(var(--neutral));
+    color: rgb(var(--light));
 
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-
-    background-color: var(--pink);
+    justify-content: center;
 }
 
 h1, h2, h3 {
     text-transform: lowercase;
     margin: 0;
+    font-family: raleway, sans-serif;
+    font-weight: lighter;
 }
 
 h2 {
@@ -51,9 +61,13 @@ h2 {
 
 p {
     line-height: 1.5em;
+    font-family: raleway, sans-serif;
+    font-weight: normal;
 }
 
 button {
+    font-family: raleway, sans-serif;
+    font-weight: lighter;
     font-size: inherit;
     color: inherit;
     border: 2px solid transparent;
@@ -65,12 +79,24 @@ i {
     pointer-events: none;
 }
 
+.page {
+    margin: 0;
+    padding-top: 5vh;
+    padding-bottom: 1em;
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    background-color: rgb(var(--neutral));
+}
+
 .page-title {
-    color: var(--white);
-    font-family: sans-serif;
-    font-weight: 400;
-    font-style: normal;
-    font-size: max(1.5em, min(4vh, 3vw));
+    color: rgb(var(--white));
+    font-size: max(2em, min(4vh, 3vw));
+    font-weight: 1000;
     min-width: 500px;
     width: 75%;
     /*margin-bottom: -.8em;*/
@@ -90,13 +116,13 @@ i {
 }
 
 .content {
-    background-color: var(--white);
+    background-color: rgb(var(--white));
     border-radius: 1rem;
-    box-shadow: var(--shadow-elevation-medium);
+    box-shadow: var(--shadow-med);
     min-width: 500px;
     width: 75%;
     padding: 2em;
-    color: var(--brown);
+    color: rgb(var(--dark));
 
     display: flex;
     flex-direction: column;
@@ -118,7 +144,7 @@ i {
     grid-template-columns: repeat(var(--columns), 1fr);
     gap: 1em;
     position: relative;
-    margin-top: .5em;
+    margin-top: 1em;
 }
 
 
@@ -126,8 +152,8 @@ i {
 .card {
     border-radius: 1rem;
     text-align: center;
-    background-color: var(--light-pink);
-    box-shadow: var(--shadow-elevation-low);
+    background-color: rgb(var(--light));
+    box-shadow: var(--shadow-low);
     aspect-ratio: 1;
 
     display: flex;
@@ -174,7 +200,7 @@ i {
 .back {
     bottom: 0;
     transform: rotateY(180deg);
-    background-color: var(--gold);
+    background-color: rgb(var(--neutral));
 }
 
 .card-face p {
@@ -206,7 +232,7 @@ i {
     transform: translateZ(-1px);
 }
 .card-flipper:focus {
-    outline: 2px solid var(--brown);
+    outline: 2px solid rgb(var(--dark));
 }
 
 
@@ -221,7 +247,7 @@ i {
     grid-template-columns: 1fr 1fr;
     gap: .5em;
 
-    color: var(--pink);
+    color: rgb(var(--neutral));
     opacity: 0; /* controls start hidden */
     transition: opacity .2s;
 }
@@ -229,6 +255,8 @@ i {
 .modify-tools .button {
     aspect-ratio: 1;
     padding: .25rem;
+    background-color: rgb(var(--neutral));
+    color: rgb(var(--light));
 }
 
 
@@ -261,19 +289,18 @@ i {
 }
 /* make the content of the flashcards look like an input form when editing mode is on */
 .editable p {
-    background-color: var(--white);
-    border-bottom: 5px solid var(--pink);
-    color: grey;
+    background-color: rgb(var(--white));
+    border-bottom: 5px solid rgb(var(--neutral));
 }
 .editable p:focus {
-    border-bottom: 5px solid var(--brown);
-    outline: 2px solid var(--pink);
+    border-bottom: 5px solid rgb(var(--dark));
+    outline: 2px solid rgb(var(--neutral));
 }
 
 
 /* styles for elements that modify the other cards within the card set */
 .card-settings {
-    background-color: var(--pink);
+    background-color: rgb(var(--neutral));
 }
 
 .hidden {
@@ -297,22 +324,23 @@ input[type="text"] {
     margin-bottom: .5em;
     padding-left: .5em;
 
-    background-color: var(--white);
+    background-color: rgb(var(--white));
     border: none;
-    border-bottom: 5px solid var(--light-pink);
-    color: var(--brown);
-    box-shadow: var(--shadow-elevation-low);
+    border-bottom: 5px solid rgb(var(--light));
+    color: rgb(var(--dark));
+    box-shadow: var(--shadow-low);
     transition: border-bottom-color var(--animation-speed);
 }
 input[type="text"]:focus {
-    border-bottom: 5px solid var(--brown);
+    border-bottom: 5px solid rgb(var(--dark));
     outline: none;
 }
 
 
 /* button styles */
 .button {
-    background-color: var(--white);
+    background-color: rgb(var(--light));
+    color: rgb(var(--dark));
     /*box-shadow: var(--shadow-elevation-low);*/
     transition: transform var(--animation-speed),
                 background-color var(--animation-speed),
@@ -320,9 +348,9 @@ input[type="text"]:focus {
     padding: .25em .5em;
 }
 .button:is(:hover,:focus) {
-    background-color: var(--brown);
+    background-color: rgb(var(--dark));
     outline: none;
-    color: var(--white);
+    color: rgb(var(--white));
 }
 /* tool tips for buttons with labels */
 .button[aria-label]::after {
@@ -333,8 +361,8 @@ input[type="text"]:focus {
     top: 0;
     width: max-content;
     padding: .5rem;
-    background-color: var(--brown);
-    color: var(--white);
+    background-color: rgb(var(--dark));
+    color: rgb(var(--white));
     border-radius: .5rem;
     opacity: 0;
     transition: opacity var(--animation-speed) 300ms;
@@ -346,22 +374,22 @@ input[type="text"]:focus {
 /* indent button when pushed */
 .button[aria-pressed="true"] {
     transform: translate3d(1px, 1px, 0);
-    background-color: var(--pink);
-    color: var(--white);
+    background-color: rgb(var(--neutral));
+    color: rgb(var(--white));
 }
 
 .new-set-btn {
     padding: 1em;
     margin-top: 2em;
     margin-bottom: 2em;
-    box-shadow: var(--shadow-elevation-medium);
-    font-family: sans-serif;
+    box-shadow: var(--shadow-med);
+    color: rgb(var(--dark));
 }
 
 .popup {
     position: absolute;
     width: 100%;
-    background-color: rgba(255, 255, 255, .6);
+    background-color: rgba(var(--white), .6);
     z-index: 2;
 }
 
@@ -369,7 +397,7 @@ input[type="text"]:focus {
     position: absolute;
     min-width: min-content;
     width: clamp(310px, 40%, 500px);
-    background-color: var(--pink);
+    background-color: rgb(var(--neutral));
     padding: 1rem;
     border-radius: .5rem;
 
@@ -378,7 +406,7 @@ input[type="text"]:focus {
     gap: 1em;
     z-index: 2;
     transition: opacity var(--animation-speed);
-    box-shadow: var(--shadow-elevation-medium);
+    box-shadow: var(--shadow-med);
 }
 
 .relative {
@@ -386,19 +414,20 @@ input[type="text"]:focus {
 }
 
 .source-input {
+    font-family: monospace;
     display: block;
     width: 100%;
     min-height: 10em;
     max-height: 30vh;
-    background-color: var(--white);
+    background-color: rgb(var(--white));
     padding: .5em;
-    border: 3px dashed var(--light-pink);
-    color: var(--brown);
+    border: 3px dashed rgb(var(--light));
+    color: rgb(var(--dark));
     overflow: auto;
 }
 
 .source-input:focus {
-    border: 3px dashed var(--brown);
+    border: 3px dashed rgb(var(--dark));
     outline: none;
 }
 
@@ -415,6 +444,13 @@ input[type="text"]:focus {
 
 .square {
     aspect-ratio: 1;
+}
+
+.highlight {
+    background-color: rgb(var(--dark));
+    color: rgb(var(--light));
+    padding: .5em;
+    box-shadow: var(--shadow-med);
 }
 
 .short-input {
@@ -435,5 +471,69 @@ input[type="text"]:focus {
 @media screen and (min-width: 1200px){
     body {
         --columns: 5;
+    }
+}
+
+/* dark and light modes */
+
+.theme-wrapper {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    color: rgb(var(--light));
+}
+
+#theme-switcher {
+    width: 3em;
+    color: rgb(var(--light));
+    box-shadow: var(--shadow-med);
+    margin-right: .5em;
+}
+
+#theme-switcher > .front {
+    background-color: rgb(var(--brown));
+    color: rgb(var(--light-pink));
+}
+#theme-switcher > .back {
+    background-color: rgb(var(--coal));
+    outline: 2px solid rgb(var(--pink));
+    color: rgb(var(--pink));
+}
+
+@media (prefers-color-scheme: dark) {
+    /* defaults to dark theme */
+    body {
+        --neutral: var(--coal);
+        --light: var(--pink);
+        --dark: var(--eggshell);
+        --white: var(--space);
+        --shadow-color: 300deg 6% 2%;
+    }
+    /* allow OS preference ot be overridden */
+    body.light-theme {
+        --neutral: var(--pink);  /* default: pink */
+        --light: var(--light-pink);    /* default: light pink */
+        --dark: var(--brown);     /* default: brown */
+        --white: var(--eggshell);
+        --shadow-color: 339deg 48% 52%;
+    }
+}
+
+/* dark mode */
+@media (prefers-color-scheme: light) {
+    /* defaults to dark theme */
+    body {
+        --neutral: var(--pink);
+        --light: var(--light-pink);
+        --dark: var(--brown);
+        --white: var(--eggshell);
+    }
+    /* allow OS preference ot be overridden */
+    body.dark-theme {
+        --neutral: var(--coal);
+        --light: var(--pink);
+        --dark: var(--eggshell);
+        --white: var(--space);
+        --shadow-color: 300deg 6% 2%;
     }
 }

@@ -1,5 +1,5 @@
 let COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
-const ANIMATION_TIMING =  parseInt(getComputedStyle(document.body).getPropertyValue('--animation-speed').slice(0, -2));
+const ANIMATION_TIMING = parseInt(getComputedStyle(document.body).getPropertyValue('--animation-speed').slice(0, -2));
 const COOKIE = 'cards'
 
 
@@ -32,10 +32,10 @@ function squish(num, min, max) {
     }
 
     if (num > max) {
-        return max + boundingFn(num-max);
+        return max + boundingFn(num - max);
     }
     if (num < min) {
-        return min - boundingFn(min-num);
+        return min - boundingFn(min - num);
     }
     return num;
 }
@@ -106,7 +106,7 @@ function renderCard(front, back, props, index) {
 
     card.prepend(button);
     card.append(renderFace('front', front, props[0]),
-        renderFace('back', back, props[1]));
+                renderFace('back', back, props[1]));
 
     if (index !== undefined) {
         card.setAttribute('data-index', index);
@@ -133,7 +133,7 @@ function slideCard(card, distX, distY) {
     // plays and returns an animation where the card moves to its original position from (distX, distY)
     const flipped = card.classList.contains('flipped') ? ' rotateY(180deg)' : '';
     const translate = [{transform: `translate3d(${toPx(distX)}, ${toPx(distY)}, 0)` + flipped},
-        {transform: `translate3d(0, 0, 0)` + flipped}];
+                       {transform: `translate3d(0, 0, 0)` + flipped}];
     return card.animate(translate, ANIMATION_TIMING);
 }
 
@@ -157,12 +157,13 @@ function growElem(card) {
     // inserts a card into the normal flow and then plays and returns an animation where the card grows from nothing
     card.classList.remove('hidden');
     const grow = [{transform: `scale(0)`},
-        {transform: 'scale(1)'}];
+                  {transform: 'scale(1)'}];
     return card.animate(grow, ANIMATION_TIMING);
 }
 
 function flipCard(card) {
-    card.classList.toggle('flipped');
+    // flips a card and returns its new state
+    return card.classList.toggle('flipped');
 }
 
 
@@ -187,39 +188,40 @@ function renderCardSet(data) {
             <button class="button square set-config-trigger relative" aria-label="settings" onclick="openSettingsPopup(this.parentElement.parentElement);"><i class="las la-cog la-lg"></i></button>
         </div>
         <div class="popup hidden">
-        <div class="popup-content">
-            <div class="space-between">
-                <h2>Settings</h2>
-                <button class="button square popup-close-btn"><i class="las la-times"></i></button>
-            </div>
-            <form class="set-config-form">
-                <label>Title<input type="text" name="title" value=""/></label>
-                <div class="cols-2">
-                    card content languages
-                    <div class="cols-2">
-                        <label>frontside<input type="text" name="langFront" value=""/></label>
-                        <label>backside<input type="text" name="langBack" value=""/></label>
-                    </div>
-                </div>
-            </form>
-            <form class="export-import-form">
+            <div class="popup-content">
                 <div class="space-between">
-                    <h3>export / import</h3>
+                    <h2>Settings</h2>
+                    <button class="button square popup-close-btn"><i class="las la-times"></i></button>
+                </div>
+                <form class="set-config-form">
+                    <label>Title<input type="text" name="title" value=""/></label>
                     <div class="cols-2">
-                        delimiters
-                        <div class="cols-2" style="width: 6em; position:relative; top: -6px">
-                            <label class="center-text">face<input type="text" name="face" value=", " required/></label>
-                            <label class="center-text">card<input type="text" name="card" value="\\n" required/></label>
+                        card content languages
+                        <div class="cols-2">
+                            <label>frontside<input type="text" name="langFront" value=""/></label>
+                            <label>backside<input type="text" name="langBack" value=""/></label>
                         </div>
                     </div>
-                </div>
-                <div class="textarea relative">
-                    <code class="source-input" contenteditable=""></code>
-                    <button type="button" class="button copy-btn" onclick="copyToClipboardButton(this);" aria-label="copy to clipboard"> copy </button>
-                </div>
-            </form>
-            <button type="button" class="button delete-btn" style="width: fit-content;" onclick="removeCardSet(this.parentElement.parentElement.parentElement)">delete this set</button>
-        </div></div>`;
+                </form>
+                <form class="export-import-form">
+                    <div class="space-between">
+                        <h3>export / import</h3>
+                        <div class="cols-2">
+                            delimiters
+                            <div class="cols-2" style="width: 6em; position:relative; top: -6px">
+                                <label class="center-text">face<input type="text" name="face" value=", " required/></label>
+                                <label class="center-text">card<input type="text" name="card" value="\\n" required/></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="textarea relative">
+                        <output name="source" class="source-input" contenteditable=""></output>
+                        <button type="button" class="button copy-btn" onclick="copyToClipboardButton(this);" aria-label="copy to clipboard"> copy </button>
+                    </div>
+                </form>
+                <button type="button" class="button delete-btn" style="width: fit-content;" onclick="removeCardSet(this.parentElement.parentElement.parentElement)">delete this set</button>
+            </div>
+        </div>`;
     /* TODO future popup features:
      * duplicate button
      * randomize order button
@@ -270,9 +272,7 @@ function removeCardSet(set) {
 
 function getSlotRect(index) {
     // returns a DOMRect representing a slot's location relative to the cardset container
-    return new DOMRect((GAP) * (index % COLUMNS),
-        (GAP) * Math.floor(index / COLUMNS),
-        GAP, GAP);
+    return new DOMRect((GAP) * (index % COLUMNS), (GAP) * Math.floor(index / COLUMNS), GAP, GAP);
 }
 
 function getClosestSlot(x, y) {
@@ -311,7 +311,7 @@ function importCards(cardString, faceSeparator, cardSeparator) {
     const cards = cardString.split(cardSeparator);
     return cards.map((card, index) => {
         const faces = card.split(faceSeparator);
-        if (faces.length !== 2){
+        if (faces.length !== 2) {
             throw SyntaxError(`Card import failed due to incorrectly formatted data: each card must have exactly two faces. \n Card ${index} has ${faces.length}: '${faces.join(',')}'`);
         }
         return faces;
@@ -321,9 +321,7 @@ function importCards(cardString, faceSeparator, cardSeparator) {
 function readSet(set) {
     // creates an object containing the title, properties, and the text on each card in a set
     return {
-        title: set.dataset.title,
-        props: getProps(set),
-        cards: readCards(set)
+        title: set.dataset.title, props: getProps(set), cards: readCards(set)
     };
 }
 
@@ -347,6 +345,7 @@ function setProps(set, props) {
             }
         });
     }
+
     helper(props[0], 'Front');
     helper(props[1], 'Back');
 }
@@ -372,22 +371,32 @@ function openSettingsPopup(set) {
     const popup = set.querySelector('.popup');
     const trigger = set.querySelector('.set-config-trigger');
 
-    // update the forms with the extracted properties
+    // populate the forms
+    // general settings form
     const configForm = popup.querySelector('.set-config-form');
     configForm.elements.title.value = set.dataset.title;
     configForm.elements.langFront.value = set.dataset.langFront;
     configForm.elements.langBack.value = set.dataset.langBack;
+    // changes to the form update the document when the user stops typing
     const configUpdateEvent = debounce(settingsUpdateEvent, 200);
     configForm.addEventListener('input', configUpdateEvent);
 
+    // import / export form
     const exportForm = popup.querySelector('.export-import-form');
     const delims = fallback(
         {face: exportForm.elements.face.value, card: exportForm.elements.card.value},
-        {face:', ', card: '\\n'});
-    const source = exportCards(set, delims.face.replace('\\n', '\n'), delims.card.replace('\\n', '\n'));
+        {face:', ', card: '\\n'}
+    );
+    const source = exportCards(
+        set,
+        delims.face.replace('\\n', '\n'),  // consider '\n' to be a new line character
+        delims.card.replace('\\n', '\n')
+    );
     exportForm.elements.face.value = delims.face;
     exportForm.elements.card.value = delims.card;
-    set.querySelector('.source-input').innerText = source;
+    exportForm.elements.source.innerText = source;
+    // changes to the delimiters cause the source element to rerender
+    // changes to the text in the source element update the flashcard set
     const exportUpdateEvent = exportUpdateEventHandlerFactory(exportForm);
     exportForm.addEventListener('input', exportUpdateEvent);
 
@@ -403,7 +412,7 @@ function openSettingsPopup(set) {
         popup.removeEventListener('click', closeSettingsPopupEvent);
         // fade out and hide the popup
         const fadeOut = [{opacity: 1},
-            {opacity: 0}];
+                         {opacity: 0}];
         popup.animate(fadeOut, ANIMATION_TIMING).finished.then(() => {
             popup.classList.add('hidden');
         });
@@ -411,6 +420,13 @@ function openSettingsPopup(set) {
         saveAll();
     }
     popup.addEventListener('click', closeSettingsPopupEvent);
+
+    // switch the cards out of modification mode so that changing the source of the flashcard set doesn't make the
+    // modification state inconsistent
+    const modifyButton = set.querySelector('.flipped.modify');
+    if (modifyButton) {
+        modifyButton.dispatchEvent(new Event('click'));
+    }
 
     // display the popup
     trigger.setAttribute('disabled', 'true');
@@ -423,22 +439,19 @@ function openSettingsPopup(set) {
     popup.animate(fadeIn, ANIMATION_TIMING);
 }
 
-function settingsUpdateEvent(InputEvent) {
+function settingsUpdateEvent(inputEvent) {
     // updates the title and properties of the set when the user changes an associated form input
-    const inputs = InputEvent.target.form.elements;
-    // InputEvent.currentTarget is only available when the event is being processed. This event handler is debounced--the
-    // browser already considers the event 'handled' by the time this code is run, so InputEvent.currentTarget = null
-    const set = InputEvent.target.form.parentElement.parentElement.parentElement;
+    const inputs = inputEvent.target.form.elements;
+    // inputEvent.currentTarget is only available when the event is being processed. This event handler is debounced--the
+    // browser already considers the event 'handled' by the time this code is run, so inputEvent.currentTarget = null
+    const set = inputEvent.target.form.parentElement.parentElement.parentElement;
     const newTitle = inputs.title.value.trim();
-    const newProps = [
-        {lang: inputs.langFront.value.trim()},
-        {lang: inputs.langBack.value.trim()}
-    ];
+    const newProps = [{lang: inputs.langFront.value.trim()},
+                      {lang: inputs.langBack.value.trim()}];
 
     if (newTitle !== set.dataset.title) {
         setTitle(set, newTitle);
     }
-
     // hack to deep compare objects--the objects' keys must be in the same order you'll get a false negative
     if (JSON.stringify(newProps) !== JSON.stringify(getProps(set))) {
         setProps(set, newProps);
@@ -448,47 +461,41 @@ function settingsUpdateEvent(InputEvent) {
 function exportUpdateEventHandlerFactory(ExportImportForm) {
     // returns a debounced event handler that updates the import / export form and the document when changes occur
     const set = ExportImportForm.parentElement.parentElement.parentElement;
-    const delimInputs = ExportImportForm.elements;
-    const sourceInput = set.querySelector('.source-input');
+    const formFields = ExportImportForm.elements;
     let oldProps = {
-        face: ExportImportForm.elements.face.value.replace('\\n', '\n'),
-        card: ExportImportForm.elements.card.value.replace('\\n', '\n'),
-        source: sourceInput.innerText
+        face: formFields.face.value.replace('\\n', '\n'),
+        card: formFields.card.value.replace('\\n', '\n'),
+        source: formFields.source.innerText
     };
     let timer = null;
 
-    return (InputEvent) => {
+    return (inputEvent) => {
         clearTimeout(timer);
         timer = setTimeout(() => {
             const newProps = {
-                face: delimInputs.face.value.replace('\\n', '\n'),
-                card: delimInputs.card.value.replace('\\n', '\n'),
-                source: sourceInput.innerText
+                face: formFields.face.value.replace('\\n', '\n'),
+                card: formFields.card.value.replace('\\n', '\n'),
+                source: formFields.source.innerText
             };
             // console.table(newProps);
             if (oldProps.card !== newProps.card || oldProps.face !== newProps.face) {
                 // delimiter values changed, rerender source
-                const source = set.querySelector('.source-input');
-                source.innerText = exportCards(set, newProps.face, newProps.card);
-                source.classList.remove('.error');
+                formFields.source.innerText = exportCards(set, newProps.face, newProps.card);
+                formFields.source.classList.remove('.error');
                 // update oldProps
                 oldProps = newProps;
             } else if (oldProps.source !== newProps.source) {
                 // source changed, regenerate this set according to the new source
                 try {
                     const newCards = importCards(newProps.source, newProps.face, newProps.card);
-                    getCards(set).forEach(card => {
-                        card.remove();
-                    });
+                    // replace all the old cards
+                    getCards(set).forEach(card => card.remove());
                     set.querySelector('.flash-cards').prepend(renderCardList(newCards, getProps(set)));
-                    /* the cards' state gets messed up when the source is edited while modification mode is on
-                    TODO: generate the cards so that they are aligned with the modification mode
-                     */
-                    sourceInput.classList.remove('error');
+                    formFields.source.classList.remove('error');
                 } catch (SyntaxError) {
                     // import failed because of bad syntax
                     console.error(SyntaxError);
-                    sourceInput.classList.add('error');
+                    formFields.source.classList.add('error');
                 }
                 // update oldProps
                 oldProps = newProps;
@@ -520,10 +527,10 @@ function flipCardEvent(clickEvent) {
     flipCard(clickEvent.currentTarget);
 }
 
-function startDragEvent (mouseDownEvent) {
+function startDragEvent(mouseDownEvent) {
     // prepares a card to be dragged and repositioned during editing mode
-    const card =  mouseDownEvent.currentTarget;
-    if (card.classList.contains('editable') ||  mouseDownEvent.target.classList.contains('button')) {
+    const card = mouseDownEvent.currentTarget;
+    if (card.classList.contains('editable') || mouseDownEvent.target.classList.contains('button')) {
         return;
     }
     const set = card.parentElement;
@@ -533,8 +540,7 @@ function startDragEvent (mouseDownEvent) {
     // track the DOMElement in each position throughout the lifetime of the drag. initialized to [0, 1, 2, ...]
     let elemIndexes = Array.from({length: cards.length}, (pos, index) => index);
     // calculate the maximum translation allowed (relative to this card)
-    const boundary = new DOMRect(setRect.x - cardRect.x, setRect.y - cardRect.y,
-                            setRect.right - cardRect.right, setRect.bottom - cardRect.bottom);
+    const boundary = new DOMRect(setRect.x - cardRect.x, setRect.y - cardRect.y, setRect.right - cardRect.right, setRect.bottom - cardRect.bottom);
     card.classList.toggle('moving');
 
     // move the card when the mouse moves
@@ -553,7 +559,9 @@ function startDragEvent (mouseDownEvent) {
         const nextSlot = getClosestSlot(card.offsetLeft + pinX, card.offsetTop + pinY); // the slot closest to the card's current position
 
         // don't evict self or neighbors that do not exist
-        if (prevSlot === nextSlot || 0 > nextSlot || nextSlot >= cards.length) { return; }
+        if (prevSlot === nextSlot || 0 > nextSlot || nextSlot >= cards.length) {
+            return;
+        }
 
         const neighbor = cards[elemIndexes[nextSlot]];
         // record the new indexes of cards so that we can still find the DOM element later
@@ -566,6 +574,7 @@ function startDragEvent (mouseDownEvent) {
         const openSlot = getSlotRect(prevSlot);
         neighbor.style.transform = `translate3d(${openSlot.x - neighbor.offsetLeft}px, ${openSlot.y - neighbor.offsetTop}px, 0)`;
     }
+
     document.addEventListener('mousemove', dragCard);
 
     const startTime = new Date(); // used to track how long the user held the mouse down
@@ -604,6 +613,7 @@ function startDragEvent (mouseDownEvent) {
         card.classList.toggle('moving');
         document.removeEventListener('mousemove', dragCard);
     }
+
     document.addEventListener('mouseup', finishDrag, {once: true, passive: true});
 }
 
@@ -614,9 +624,9 @@ function editCardEvent(clickEvent) {
     if (clickEvent.target.classList.contains('delete-btn')) {
         // shrink the card to be deleted
         const cardIndex = readInt(card, 'data-index');
-        shrinkCard(card).finished.then( function() {
-                card.remove();  // update the DOM after the shrink animation has finished
-            });
+        shrinkCard(card).finished.then(function () {
+            card.remove();  // update the DOM after the shrink animation has finished
+        });
 
         // move all the cards after the deleted card
         const set = card.parentElement;
@@ -686,25 +696,23 @@ function modifyCardsEvent(clickEvent) {
     const newCardForm = button.previousElementSibling;
     const set = button.parentElement;
     const numCards = set.childElementCount;
-    const state = button.classList.contains('flipped');
 
-    flipCard(button);
     // toggle the create card form
-    if (state) {
+    if (flipCard(button)) {
+        // show the form
+        growElem(newCardForm);
+        const newPos = getSlotRect(numCards - 1);
+        const oldPos = getSlotRect(numCards - 2);
+        slideCard(button, oldPos.x - newPos.x, oldPos.y - newPos.y);
+    } else {
         // hide the form
-        shrinkCard(newCardForm).finished.then(function() {
+        shrinkCard(newCardForm).finished.then(function () {
             newCardForm.classList.add('hidden');
         });
         const newPos = getSlotRect(numCards - 2);
         const oldPos = getSlotRect(numCards - 1);
         slideCard(button, oldPos.x - newPos.x, oldPos.y - newPos.y);
         saveAll();
-    } else {
-        // show the form
-        growElem(newCardForm);
-        const newPos = getSlotRect(numCards - 1);
-        const oldPos = getSlotRect(numCards - 2);
-        slideCard(button, oldPos.x - newPos.x, oldPos.y - newPos.y);
     }
 
     // toggle the modification state of all the cards in the set
@@ -757,40 +765,30 @@ function createCardEvent(submitEvent) {
 function createSetEvent() {
     // creates a new set when the 'add set' button at the bottom of the page is clicked
     const emptyCardSet = {
-        title: 'new set',
-        props: [{lang: 'en'}, {lang: 'en'}],
-        cards: [['hello!', 'i love u!']]
+        title: 'new set', props: [{lang: 'en'}, {lang: 'en'}], cards: [['hello!', 'i love u!']]
     }
     const newSet = renderCardSet(emptyCardSet);
     newSet.classList.add('hidden');
-    contentWrapper.append(newSet);
+    document.querySelector('.content').append(newSet);
     growElem(newSet);
 }
 
 // example sets
 const sample = [{
-        title: "I'm a set of flash cards!",
-        props: [{lang: 'en'}, {lang: 'en'}],
-        cards: [
-            ["i'm a flash card!", "you are not a flash card!"],
-            ["click me!!", "do it again!!"],
+    title: "I'm a set of flash cards!",
+    props: [{lang: 'en'}, {lang: 'en'}],
+    cards: [["i'm a flash card!", "you are not a flash card!"], ["click me!!", "do it again!!"],
             ["i wanna change the set title!", "click the gear in the top right!!"],
             ["edit me by clicking over here -->", "drag me so i don't make sense!!"]]
-    }];
+}];
 
-const french = [
-    {
-        title: 'translate the french terms to english',
-        props: [{lang: 'fr'}, {lang: 'en'}],
-        cards: [
-            ["de rien", "it's ok"],
-            ["je vous en prie", "don't mention it"],
-            ["je t'en prie", "you're welcome"],
-            ["excusez-moi", "excuse me"],
-            ["il n'y a pas de quoi", "there's nothing to get worked up about"],
-            ["ca s'ecrit comment?", "how is that written?"],
-            ["faire", "to do"]]
-    }];
+const french = [{
+    title: 'translate the french terms to english',
+    props: [{lang: 'fr'}, {lang: 'en'}],
+    cards: [["de rien", "it's ok"], ["je vous en prie", "don't mention it"], ["je t'en prie", "you're welcome"],
+            ["excusez-moi", "excuse me"], ["il n'y a pas de quoi", "there's nothing to get worked up about"],
+            ["ca s'ecrit comment?", "how is that written?"], ["faire", "to do"]]
+}];
 
 
 /* local storage management */
@@ -825,16 +823,49 @@ function resetAll(defaultState = null) {
     loadState();
 }
 
+// update the theme button to display the correct theme when the page loads
+const themeButton = document.querySelector('#theme-switcher');
+// the theme saved in localStorage (if there is one) has higher priority over the OS settings
+const prefersDarkTheme = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
+const storedTheme = localStorage.getItem('theme') || (prefersDarkTheme() ? "dark" : "light");
+if (storedTheme === 'light') {
+    document.body.classList.add('light-theme');
+} else if (storedTheme === 'dark') {
+    themeButton.classList.add('flipped');
+    document.body.classList.add('dark-theme');
+}
 
-// load the previous state from memory
+// toggle the theme of the page when the theme button is pressed
+themeButton.addEventListener("click", (clickEvent) => {
+    localStorage.setItem('theme', flipCard(clickEvent.currentTarget) ? 'dark' : 'light');
+    if (prefersDarkTheme()) {
+        // apply the .light-theme class to override the dark theme style
+        document.body.classList.toggle("light-theme");
+    } else {
+        // apply the .dark-theme class to override the default light styles
+        document.body.classList.toggle("dark-theme");
+    }
+});
+
+// load the previous state of the flashcards from memory
 document.querySelector('.content').append(loadState());
 
 // update global constants COLUMNS and GAP when the window resizes
-let GAP = document.querySelector('.card').offsetWidth + 16;
-window.addEventListener('resize', debounce(
-    () => {
-        COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
-        GAP = document.querySelector('.card:last-child').offsetWidth + 16;
-    }, 500));
+let GAP = document.querySelector('.card:last-child').offsetWidth + 16;
 
-// const s = document.querySelector('.flash-card-set');  // debug faster
+function updateConstants() {
+    COLUMNS = parseInt(getComputedStyle(document.body).getPropertyValue('--columns'));
+    // fetch the final displayed flashcard (NOT the theme switching button or a hidden flashcard)
+    const displayed_card = document.querySelector('.card:last-child');
+    if (displayed_card) {
+        // sometimes there aren't any flashcard sets on the page -- we can't update GAP right now
+        GAP = document.querySelector('.card:last-child').offsetWidth + 16;
+    } else {
+        // retry the update in a few seconds
+        setTimeout(updateConstants, 1000);
+    }
+}
+
+window.addEventListener('resize', debounce(updateConstants, 500));
+
+const s = document.querySelector('.flash-card-set');  // debug faster
