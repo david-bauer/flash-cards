@@ -3,15 +3,16 @@
 }
 
 :root {
-    /* colors: */
+    /*  colors:
+        color variables must be saved like this so that opacity can be applied according to the needs of each element
+        (https://stackoverflow.com/questions/40010597/how-do-i-apply-opacity-to-a-css-color-variable)
+    */
     --eggshell: 252, 252, 252;
     --light-pink: 255, 226, 237;
     --pink: 255, 175, 204;
     --brown: 51, 38, 29;
     --space: 66, 61, 68;
     --coal: 13, 11, 14;
-    /* color variables must be saved like this so that opacity can be applied
-    (https://stackoverflow.com/questions/40010597/how-do-i-apply-opacity-to-a-css-color-variable) */
 
     /* functional variables: */
     --columns: 4;
@@ -19,7 +20,9 @@
 }
 
 body {
-    /* box shadow settings */
+    /*  box shadow:
+        created with Josh Comeau's tool: https://www.joshwcomeau.com/shadow-palette/
+    */
     --shadow-color: 339deg 48% 52%;
     --shadow-med:
             0.3px 0.5px 0.7px hsl(var(--shadow-color) / 0.36),
@@ -31,8 +34,80 @@ body {
             0.4px 0.8px 1px -1.2px hsl(var(--shadow-color) / 0.34),
             1px 2px 2.5px -2.5px hsl(var(--shadow-color) / 0.34);
 
+    font-family: raleway, sans-serif;
     margin: 0;
     padding: 0;
+    background-color: rgb(var(--neutral));
+}
+
+h1, h2, h3 {
+    margin: 0;
+    text-transform: lowercase;
+    font-weight: lighter;
+}
+
+h2 {
+    font-size: 1.8em;
+}
+
+p {
+    line-height: 1.5em;
+}
+
+button {
+    /* override default styling */
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    border: 2px solid transparent;
+    cursor: pointer;
+
+    font-weight: normal;
+    border-radius: .5em;
+}
+
+label {
+    text-align: center;
+}
+
+i {
+    pointer-events: none; /* prevents icons from stealing click events from their parent element */
+}
+
+
+/* page layout styles */
+.page {
+    margin: 2vh auto;
+    width: 75%;
+    min-width: 500px;
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+
+    color: rgb(var(--dark));
+}
+.page-title {
+    color: rgb(var(--white));
+    font-size: max(2em, min(7vh, 6vw));
+    font-weight: 1000;
+}
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+
+    width: 100%;
+    padding: 2em;
+    background-color: rgb(var(--white));
+    border-radius: 1rem;
+    box-shadow: var(--shadow-med);
+}
+.content:empty::before {
+    text-align: center;
+    content: "it's rather empty in here... ";
+    color: dimgrey;
 }
 
 #footer {
@@ -45,116 +120,31 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: space-evenly;
 }
 
-h1, h2, h3 {
-    text-transform: lowercase;
-    margin: 0;
-    font-family: raleway, sans-serif;
-    font-weight: lighter;
-}
 
-h2 {
-    font-size: 1.8em;
-}
-
-p {
-    line-height: 1.5em;
-    font-family: raleway, sans-serif;
-    font-weight: normal;
-}
-
-button {
-    font-family: raleway, sans-serif;
-    font-weight: lighter;
-    font-size: inherit;
-    color: inherit;
-    border: 2px solid transparent;
-    border-radius: .5em;
-    cursor: pointer;
-}
-/* prevent icons from stealing click events from their parent element */
-i {
-    pointer-events: none;
-}
-
-.page {
-    margin: 0;
-    padding-top: 5vh;
-    padding-bottom: 1em;
-    width: 100%;
-    min-height: 100vh;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    background-color: rgb(var(--neutral));
-}
-
-.page-title {
-    color: rgb(var(--white));
-    font-size: max(2em, min(4vh, 3vw));
-    font-weight: 1000;
-    min-width: 500px;
-    width: 75%;
-    /*margin-bottom: -.8em;*/
-}
-
-.space-between {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.cols-2 {
-    display: flex;
-    gap: 1em;
-    align-items: center;
-}
-
-.content {
-    background-color: rgb(var(--white));
-    border-radius: 1rem;
-    box-shadow: var(--shadow-med);
-    min-width: 500px;
-    width: 75%;
-    padding: 2em;
-    color: rgb(var(--dark));
-
-    display: flex;
-    flex-direction: column;
-    gap: 2em;
-}
-
-.content:empty::before {
-    text-align: center;
-    content: "it's rather empty in here... ";
-    color: dimgrey;
-}
-
+/* flash card styles */
 .flash-card-set {
     position: relative; /* required for popup to position correctly */
 }
 
 .flash-cards {
+    position: relative;
+    margin-top: 1em;
+    text-align: center;
+
     display: grid;
     grid-template-columns: repeat(var(--columns), 1fr);
     gap: 1em;
-    position: relative;
-    margin-top: 1em;
 }
 
 
 /* card styles */
 .card {
-    border-radius: 1rem;
-    text-align: center;
-    background-color: rgb(var(--light));
-    box-shadow: var(--shadow-low);
     aspect-ratio: 1;
+    border-radius: 1rem;
+    background-color: rgb(var(--light));
 
     display: flex;
     flex-direction: column;
@@ -163,18 +153,48 @@ i {
     transform-style: preserve-3d;
     transition: transform var(--animation-speed) ease;
 }
-
 .card.flipped {
     transform: rotate3d(0, 1, 0, 180deg);
 }
-
 .card.moving {
     z-index: 2;
     will-change: transform;
     transition: transform 0s !important;
 }
+/* card flipper (the focusable button on each card) styles */
+.card-flipper {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    transform: translateZ(2px);
+    background-color: transparent;
+}
+.flipped .card-flipper {
+    transform: translateZ(-1px);
+}
+.card-flipper:focus {
+    outline: 2px solid rgb(var(--dark));
+}
+/* card specific modify controls  */
+.modify-tools {
+    position: absolute;
+    right: .5rem;
+    top: -1ch;
+    transform: translateZ(2px);
 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5em;
 
+    opacity: 0; /* controls start hidden */
+    transition: opacity var(--animation-speed);
+}
+.modify-tools .button {
+    aspect-ratio: 1;
+    padding: .25rem;
+    background-color: rgb(var(--neutral));
+    color: rgb(var(--light));
+}
 /* card face styles */
 .card-face {
     position: absolute;
@@ -190,78 +210,33 @@ i {
     transition: height var(--animation-speed),
                 border-radius var(--animation-speed);
 }
-
 .front {
     top: 0;
     transform: translateZ(1px);
     background-color: inherit;
 }
-
 .back {
     bottom: 0;
     transform: rotateY(180deg);
     background-color: rgb(var(--neutral));
 }
-
 .card-face p {
-    max-width: available;
-    padding-left: .5em;
-    padding-right: .5em;
+    padding: .5em;
     margin: auto;
-    border-top: 5px solid transparent;
+    max-width: 100%;
+    overflow-wrap: break-word;
+
+    border-top: 5px solid transparent; /* prevents the text from shifting when borders are added during edit mode */
     border-bottom: 5px solid transparent;
     transition: background-color var(--animation-speed),
                 border-bottom-color var(--animation-speed);
 }
-/* prevent user-entered line breaks */
-.card-face p > br {
-    display: none;
-}
+/*.card-face p > br {*/
+/*    display: none; !* prevents user-entered line breaks *!*/
+/*}*/
 
 
-/* card-flipper styles */
-.card-flipper {
-    width: 100%;
-    height: 100%;
-    border-radius: inherit;
-    transform: translateZ(2px);
-    background-color: transparent;
-    /*opacity: .25;*/
-}
-.flipped .card-flipper {
-    transform: translateZ(-1px);
-}
-.card-flipper:focus {
-    outline: 2px solid rgb(var(--dark));
-}
-
-
-/* card specific modify controls  */
-.modify-tools {
-    position: absolute;
-    right: .5rem;
-    top: -1ch;
-    transform: translateZ(2px);
-
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: .5em;
-
-    color: rgb(var(--neutral));
-    opacity: 0; /* controls start hidden */
-    transition: opacity .2s;
-}
-
-.modify-tools .button {
-    aspect-ratio: 1;
-    padding: .25rem;
-    background-color: rgb(var(--neutral));
-    color: rgb(var(--light));
-}
-
-
-/* modify functionality */
-
+/* card set modify functionality */
 .modifying:not(.editable) {
     cursor: move;
 }
@@ -341,7 +316,7 @@ input[type="text"]:focus {
 .button {
     background-color: rgb(var(--light));
     color: rgb(var(--dark));
-    /*box-shadow: var(--shadow-elevation-low);*/
+    box-shadow: var(--shadow-low);
     transition: transform var(--animation-speed),
                 background-color var(--animation-speed),
                 color var(--animation-speed);
@@ -377,8 +352,8 @@ input[type="text"]:focus {
     background-color: rgb(var(--neutral));
     color: rgb(var(--white));
 }
-
 .new-set-btn {
+    align-self: center;
     padding: 1em;
     margin-top: 2em;
     margin-bottom: 2em;
@@ -386,19 +361,21 @@ input[type="text"]:focus {
     color: rgb(var(--dark));
 }
 
+
+/* popup styles */
 .popup {
     position: absolute;
     width: 100%;
+    height: calc(100% - 2em);
     background-color: rgba(var(--white), .6);
     z-index: 2;
 }
-
 .popup-content {
     position: absolute;
     min-width: min-content;
     width: clamp(310px, 40%, 500px);
     background-color: rgb(var(--neutral));
-    padding: 1rem;
+    padding: 1em;
     border-radius: .5rem;
 
     display: flex;
@@ -408,58 +385,59 @@ input[type="text"]:focus {
     transition: opacity var(--animation-speed);
     box-shadow: var(--shadow-med);
 }
-
-.relative {
-    position: relative;
-}
-
 .source-input {
-    font-family: monospace;
     display: block;
-    width: 100%;
     min-height: 10em;
-    max-height: 30vh;
-    background-color: rgb(var(--white));
+    max-height: 20vh;
     padding: .5em;
+    background-color: rgb(var(--white));
     border: 3px dashed rgb(var(--light));
-    color: rgb(var(--dark));
     overflow: auto;
+    font-family: monospace;
 }
-
 .source-input:focus {
     border: 3px dashed rgb(var(--dark));
     outline: none;
 }
-
 .copy-btn {
     position: absolute;
     right: 10px;
     bottom: 10px;
-    /*padding: .25em .5em .25em .5em;*/
 }
 
-.center-text {
-    text-align: center;
-}
 
+/* generic formatting classes */
+.relative {
+    position: relative;
+}
+.space-between {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5em;  /* minimum gap */
+}
+.cols-2 {
+    display: flex;
+    gap: 1em;
+    align-items: center;
+}
 .square {
     aspect-ratio: 1;
 }
-
+.short-input {
+    width: 3em;
+}
 .highlight {
+    padding: .5em;
     background-color: rgb(var(--dark));
     color: rgb(var(--light));
-    padding: .5em;
     box-shadow: var(--shadow-med);
 }
-
-.short-input {
-    width: 3rem;
-}
-
 .error {
     color: crimson;
 }
+
 
 /* content reflow */
 @media screen and (max-width: 860px){
@@ -474,22 +452,17 @@ input[type="text"]:focus {
     }
 }
 
-/* dark and light modes */
 
+/* dark and light theme switcher */
 .theme-wrapper {
-    position: absolute;
-    top: 1em;
-    right: 1em;
+    font-size: 1rem;
     color: rgb(var(--light));
 }
-
 #theme-switcher {
-    width: 3em;
+    width: 3.1rem;
     color: rgb(var(--light));
     box-shadow: var(--shadow-med);
-    margin-right: .5em;
 }
-
 #theme-switcher > .front {
     background-color: rgb(var(--brown));
     color: rgb(var(--light-pink));
@@ -499,41 +472,41 @@ input[type="text"]:focus {
     outline: 2px solid rgb(var(--pink));
     color: rgb(var(--pink));
 }
-
+/* dark theme */
 @media (prefers-color-scheme: dark) {
     /* defaults to dark theme */
     body {
-        --neutral: var(--coal);
-        --light: var(--pink);
-        --dark: var(--eggshell);
         --white: var(--space);
+        --light: var(--pink);
+        --neutral: var(--coal);
+        --dark: var(--eggshell);
         --shadow-color: 300deg 6% 2%;
     }
     /* allow OS preference ot be overridden */
     body.light-theme {
-        --neutral: var(--pink);  /* default: pink */
-        --light: var(--light-pink);    /* default: light pink */
-        --dark: var(--brown);     /* default: brown */
         --white: var(--eggshell);
+        --light: var(--light-pink);
+        --neutral: var(--pink);
+        --dark: var(--brown);
         --shadow-color: 339deg 48% 52%;
     }
 }
-
-/* dark mode */
+/* light theme */
 @media (prefers-color-scheme: light) {
-    /* defaults to dark theme */
+    /* defaults to light theme */
     body {
-        --neutral: var(--pink);
-        --light: var(--light-pink);
-        --dark: var(--brown);
         --white: var(--eggshell);
+        --light: var(--light-pink);
+        --neutral: var(--pink);
+        --dark: var(--brown);
+        --shadow-color: 339deg 48% 52%;
     }
     /* allow OS preference ot be overridden */
     body.dark-theme {
-        --neutral: var(--coal);
-        --light: var(--pink);
-        --dark: var(--eggshell);
         --white: var(--space);
+        --light: var(--pink);
+        --neutral: var(--coal);
+        --dark: var(--light-pink);
         --shadow-color: 300deg 6% 2%;
     }
 }

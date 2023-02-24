@@ -194,7 +194,7 @@ function renderCardSet(data) {
                     <button class="button square popup-close-btn"><i class="las la-times"></i></button>
                 </div>
                 <form class="set-config-form">
-                    <label>Title<input type="text" name="title" value=""/></label>
+                    <label>title<input type="text" name="title" value=""/></label>
                     <div class="cols-2">
                         card content languages
                         <div class="cols-2">
@@ -209,8 +209,8 @@ function renderCardSet(data) {
                         <div class="cols-2">
                             delimiters
                             <div class="cols-2" style="width: 6em; position:relative; top: -6px">
-                                <label class="center-text">face<input type="text" name="face" value=", " required/></label>
-                                <label class="center-text">card<input type="text" name="card" value="\\n" required/></label>
+                                <label>face<input type="text" name="face" value=", " required/></label>
+                                <label>card<input type="text" name="card" value="\\n" required/></label>
                             </div>
                         </div>
                     </div>
@@ -432,7 +432,6 @@ function openSettingsPopup(set) {
     trigger.setAttribute('disabled', 'true');
     popup.firstElementChild.style.top = `calc(-${trigger.offsetHeight}px - 1rem)`;
     popup.firstElementChild.style.right = '-1rem';
-    popup.style.height = `calc(${popup.nextElementSibling.offsetHeight}px + 1em)`;
     popup.classList.remove('hidden');
     const fadeIn = [{opacity: 0},
                     {opacity: 1}];

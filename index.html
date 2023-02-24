@@ -23,20 +23,20 @@
     </script>
 </head>
 <body>
-    <div class="theme-wrapper space-between">
-        <div id="theme-switcher" class="card">
-            <button class="card-flipper"></button>
-            <div class="card-face front"><p lang="en">light</p></div>
-            <div class="card-face back"><p lang="en">dark</p></div>
-        </div>
-        <p>theme</p>
-    </div>
     <section class="page">
         <div class="page-title"><h1>Flashcards</h1></div>
         <div class="content"><!-- flash cards sets get generated here --></div>
         <button class="button new-set-btn" onclick="createSetEvent()">add a set</button>
     </section>
     <footer id="footer">
+        <div class="theme-wrapper space-between">
+            <div id="theme-switcher" class="card">
+                <button class="card-flipper"></button>
+                <div class="card-face front"><p lang="en">light</p></div>
+                <div class="card-face back"><p lang="en">dark</p></div>
+            </div>
+            <p>theme</p>
+        </div>
         <p>made by <strong class="highlight">david bauer</strong></p>
     </footer>
 </body>

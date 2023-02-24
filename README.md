@@ -4,18 +4,15 @@ Just a small webpage that lets users create and edit sets of two-sided flashcard
 
 ## Current Functionality:
 
-- Flippable cards
-- Card creation
-- Card editing mode
-- Card deletion
+- Flippable two-sided flash cards
+- Card creation, modification and deletion
 - Card reorganization (drag them to new positions)
-- Fancy animations for the above four
-- Tooltips
-- Pretty styling 
-- Multiple sets on one page
-- Options panel
-- Import cards
-- Export cards
+- Flash card set creation, modification, and deletion
+- Flash card sets persist across sessions with localStorage
+- Import and export card sets
+- Light and dark theme
+- Simplistic animations
+- Pretty color scheme
 
 ## Future Functionality:
 
