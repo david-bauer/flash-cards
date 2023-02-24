@@ -37,7 +37,7 @@ body {
     font-family: raleway, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: rgb(var(--neutral));
+    background-color: rgb(var(--secondary-color));
 }
 
 h1, h2, h3 {
@@ -86,10 +86,11 @@ i {
     flex-direction: column;
     align-items: stretch;
 
-    color: rgb(var(--dark));
+    color: rgb(var(--text-color));
+    transition: background-color var(--animation-speed);
 }
 .page-title {
-    color: rgb(var(--white));
+    color: rgb(var(--neutral-color));
     font-size: max(2em, min(7vh, 6vw));
     font-weight: 1000;
 }
@@ -100,7 +101,7 @@ i {
 
     width: 100%;
     padding: 2em;
-    background-color: rgb(var(--white));
+    background-color: rgb(var(--neutral-color));
     border-radius: 1rem;
     box-shadow: var(--shadow-med);
 }
@@ -114,8 +115,7 @@ i {
     margin: 0;
     padding: 1em;
     width: 100%;
-    background-color: rgb(var(--neutral));
-    color: rgb(var(--light));
+    color: rgb(var(--primary-color));
 
     display: flex;
     flex-direction: row;
@@ -144,14 +144,14 @@ i {
 .card {
     aspect-ratio: 1;
     border-radius: 1rem;
-    background-color: rgb(var(--light));
+    background-color: rgb(var(--primary-color));
 
     display: flex;
     flex-direction: column;
     justify-content: center;
 
     transform-style: preserve-3d;
-    transition: transform var(--animation-speed) ease;
+    transition: transform var(--animation-speed);
 }
 .card.flipped {
     transform: rotate3d(0, 1, 0, 180deg);
@@ -173,7 +173,7 @@ i {
     transform: translateZ(-1px);
 }
 .card-flipper:focus {
-    outline: 2px solid rgb(var(--dark));
+    outline: 2px solid rgb(var(--text-color));
 }
 /* card specific modify controls  */
 .modify-tools {
@@ -192,8 +192,8 @@ i {
 .modify-tools .button {
     aspect-ratio: 1;
     padding: .25rem;
-    background-color: rgb(var(--neutral));
-    color: rgb(var(--light));
+    background-color: rgb(var(--secondary-color));
+    color: rgb(var(--primary-color));
 }
 /* card face styles */
 .card-face {
@@ -218,7 +218,7 @@ i {
 .back {
     bottom: 0;
     transform: rotateY(180deg);
-    background-color: rgb(var(--neutral));
+    background-color: rgb(var(--secondary-color));
 }
 .card-face p {
     padding: .5em;
@@ -264,18 +264,18 @@ i {
 }
 /* make the content of the flashcards look like an input form when editing mode is on */
 .editable p {
-    background-color: rgb(var(--white));
-    border-bottom: 5px solid rgb(var(--neutral));
+    background-color: rgb(var(--neutral-color));
+    border-bottom: 5px solid rgb(var(--secondary-color));
 }
 .editable p:focus {
-    border-bottom: 5px solid rgb(var(--dark));
-    outline: 2px solid rgb(var(--neutral));
+    border-bottom: 5px solid rgb(var(--text-color));
+    outline: 2px solid rgb(var(--secondary-color));
 }
 
 
 /* styles for elements that modify the other cards within the card set */
 .card-settings {
-    background-color: rgb(var(--neutral));
+    background-color: rgb(var(--secondary-color));
 }
 
 .hidden {
@@ -299,23 +299,23 @@ input[type="text"] {
     margin-bottom: .5em;
     padding-left: .5em;
 
-    background-color: rgb(var(--white));
+    background-color: rgb(var(--neutral-color));
     border: none;
-    border-bottom: 5px solid rgb(var(--light));
-    color: rgb(var(--dark));
+    border-bottom: 5px solid rgb(var(--primary-color));
+    color: rgb(var(--text-color));
     box-shadow: var(--shadow-low);
     transition: border-bottom-color var(--animation-speed);
 }
 input[type="text"]:focus {
-    border-bottom: 5px solid rgb(var(--dark));
+    border-bottom: 5px solid rgb(var(--text-color));
     outline: none;
 }
 
 
 /* button styles */
 .button {
-    background-color: rgb(var(--light));
-    color: rgb(var(--dark));
+    background-color: rgb(var(--primary-color));
+    color: rgb(var(--text-color));
     box-shadow: var(--shadow-low);
     transition: transform var(--animation-speed),
                 background-color var(--animation-speed),
@@ -323,9 +323,9 @@ input[type="text"]:focus {
     padding: .25em .5em;
 }
 .button:is(:hover,:focus) {
-    background-color: rgb(var(--dark));
+    background-color: rgb(var(--text-color));
     outline: none;
-    color: rgb(var(--white));
+    color: rgb(var(--neutral-color));
 }
 /* tool tips for buttons with labels */
 .button[aria-label]::after {
@@ -336,8 +336,8 @@ input[type="text"]:focus {
     top: 0;
     width: max-content;
     padding: .5rem;
-    background-color: rgb(var(--dark));
-    color: rgb(var(--white));
+    background-color: rgb(var(--text-color));
+    color: rgb(var(--neutral-color));
     border-radius: .5rem;
     opacity: 0;
     transition: opacity var(--animation-speed) 300ms;
@@ -349,8 +349,8 @@ input[type="text"]:focus {
 /* indent button when pushed */
 .button[aria-pressed="true"] {
     transform: translate3d(1px, 1px, 0);
-    background-color: rgb(var(--neutral));
-    color: rgb(var(--white));
+    background-color: rgb(var(--secondary-color));
+    color: rgb(var(--neutral-color));
 }
 .new-set-btn {
     align-self: center;
@@ -358,7 +358,6 @@ input[type="text"]:focus {
     margin-top: 2em;
     margin-bottom: 2em;
     box-shadow: var(--shadow-med);
-    color: rgb(var(--dark));
 }
 
 
@@ -367,14 +366,14 @@ input[type="text"]:focus {
     position: absolute;
     width: 100%;
     height: calc(100% - 2em);
-    background-color: rgba(var(--white), .6);
+    background-color: rgba(var(--neutral-color), .6);
     z-index: 2;
 }
 .popup-content {
     position: absolute;
     min-width: min-content;
     width: clamp(310px, 40%, 500px);
-    background-color: rgb(var(--neutral));
+    background-color: rgb(var(--secondary-color));
     padding: 1em;
     border-radius: .5rem;
 
@@ -390,19 +389,19 @@ input[type="text"]:focus {
     min-height: 10em;
     max-height: 20vh;
     padding: .5em;
-    background-color: rgb(var(--white));
-    border: 3px dashed rgb(var(--light));
+    background-color: rgb(var(--neutral-color));
+    border: 3px dashed rgb(var(--primary-color));
     overflow: auto;
     font-family: monospace;
 }
 .source-input:focus {
-    border: 3px dashed rgb(var(--dark));
+    border: 3px dashed rgb(var(--text-color));
     outline: none;
 }
 .copy-btn {
     position: absolute;
     right: 10px;
-    bottom: 10px;
+    top: 10px;
 }
 
 
@@ -430,8 +429,8 @@ input[type="text"]:focus {
 }
 .highlight {
     padding: .5em;
-    background-color: rgb(var(--dark));
-    color: rgb(var(--light));
+    background-color: rgb(var(--text-color));
+    color: rgb(var(--primary-color));
     box-shadow: var(--shadow-med);
 }
 .error {
@@ -456,38 +455,50 @@ input[type="text"]:focus {
 /* dark and light theme switcher */
 .theme-wrapper {
     font-size: 1rem;
-    color: rgb(var(--light));
+    color: rgb(var(--primary-color));
 }
 #theme-switcher {
-    width: 3.1rem;
-    color: rgb(var(--light));
+    width: calc(3rem + 2px);
     box-shadow: var(--shadow-med);
 }
-#theme-switcher > .front {
-    background-color: rgb(var(--brown));
-    color: rgb(var(--light-pink));
+#theme-switcher .card-flipper {
+    outline: 3px solid transparent;
 }
-#theme-switcher > .back {
-    background-color: rgb(var(--coal));
-    outline: 2px solid rgb(var(--pink));
-    color: rgb(var(--pink));
+#theme-switcher .card-face {
+    transition: background-color var(--animation-speed),
+    color var(--animation-speed),
+    outline-color var(--animation-speed);
+    color: rgb(var(--primary-color));
+}
+#theme-switcher .card-face.front {
+    background-color: rgb(var(--text-color));
+    outline: 3px solid rgb(var(--text-color));
+}
+#theme-switcher > .card-face.back {
+    background-color: rgb(var(--secondary-color));
+    color: rgb(var(--primary-color));
+    outline: 3px solid rgb(var(--primary-color));
+}
+#theme-switcher .card-flipper:is(:hover, :focus) ~ .card-face {
+    color: rgb(var(--text-color));
+    background-color: rgb(var(--primary-color));
 }
 /* dark theme */
 @media (prefers-color-scheme: dark) {
     /* defaults to dark theme */
     body {
-        --white: var(--space);
-        --light: var(--pink);
-        --neutral: var(--coal);
-        --dark: var(--eggshell);
+        --primary-color: var(--pink);
+        --secondary-color: var(--coal);
+        --neutral-color: var(--space);
+        --text-color: var(--eggshell);
         --shadow-color: 300deg 6% 2%;
     }
     /* allow OS preference ot be overridden */
     body.light-theme {
-        --white: var(--eggshell);
-        --light: var(--light-pink);
-        --neutral: var(--pink);
-        --dark: var(--brown);
+        --primary-color: var(--light-pink);
+        --secondary-color: var(--pink);
+        --neutral-color: var(--eggshell);
+        --text-color: var(--brown);
         --shadow-color: 339deg 48% 52%;
     }
 }
@@ -495,18 +506,18 @@ input[type="text"]:focus {
 @media (prefers-color-scheme: light) {
     /* defaults to light theme */
     body {
-        --white: var(--eggshell);
-        --light: var(--light-pink);
-        --neutral: var(--pink);
-        --dark: var(--brown);
+        --primary-color: var(--light-pink);
+        --secondary-color: var(--pink);
+        --neutral-color: var(--eggshell);
+        --text-color: var(--brown);
         --shadow-color: 339deg 48% 52%;
     }
     /* allow OS preference ot be overridden */
     body.dark-theme {
-        --white: var(--space);
-        --light: var(--pink);
-        --neutral: var(--coal);
-        --dark: var(--light-pink);
+        --primary-color: var(--pink);
+        --secondary-color: var(--coal);
+        --neutral-color: var(--space);
+        --text-color: var(--light-pink);
         --shadow-color: 300deg 6% 2%;
     }
 }

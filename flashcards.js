@@ -822,30 +822,6 @@ function resetAll(defaultState = null) {
     loadState();
 }
 
-// update the theme button to display the correct theme when the page loads
-const themeButton = document.querySelector('#theme-switcher');
-// the theme saved in localStorage (if there is one) has higher priority over the OS settings
-const prefersDarkTheme = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
-const storedTheme = localStorage.getItem('theme') || (prefersDarkTheme() ? "dark" : "light");
-if (storedTheme === 'light') {
-    document.body.classList.add('light-theme');
-} else if (storedTheme === 'dark') {
-    themeButton.classList.add('flipped');
-    document.body.classList.add('dark-theme');
-}
-
-// toggle the theme of the page when the theme button is pressed
-themeButton.addEventListener("click", (clickEvent) => {
-    localStorage.setItem('theme', flipCard(clickEvent.currentTarget) ? 'dark' : 'light');
-    if (prefersDarkTheme()) {
-        // apply the .light-theme class to override the dark theme style
-        document.body.classList.toggle("light-theme");
-    } else {
-        // apply the .dark-theme class to override the default light styles
-        document.body.classList.toggle("dark-theme");
-    }
-});
-
 // load the previous state of the flashcards from memory
 document.querySelector('.content').append(loadState());
 
